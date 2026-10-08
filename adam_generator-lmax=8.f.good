@@ -1,0 +1,195 @@
+      subroutine init(dummy1,dummy2)
+c     eg and t are fixed 
+      implicit double precision (a-h,o-z)
+      character*3 cemin,cemax
+      character*10 estring
+      character*3 ctmin,ctmax
+      character*10 tstring
+      character*2 clm
+      character*9 lstring
+      character*120 he4_parms
+      character*120 filename
+
+      common /mbin/ xmmin(200),xmmax(200),xmid(200)
+
+      common /bin/ ie,it,mass,lmax,itot
+      common /ener/ emin,emax
+      common /wave/ wynr(300,300),errr(300,300)
+      dimension wynrl(300),wynru(300)
+      parameter (he4_parms  = 'GENOVA_PARMS')
+
+      call frac
+      mass = 100
+      lmax0 =4
+      lmax = 8
+      do l=0,lmax
+      do m=0,l
+      itot = itot + 1
+      enddo
+      enddo
+
+
+      do imbin=1,mass
+      xmmin(imbin) = dble(imbin-1)*0.010 + 0.400
+      xmmax(imbin) = dble(imbin  )*0.010 + 0.400
+      xmid(imbin) = (xmmin(imbin)+xmmax(imbin))/2.
+      enddo
+
+      eg = 3.5
+      t = 0.55
+      ie = 3
+      it = 5
+
+      call ename(ie,cemin,cemax,emin,emax,estring)
+      eg = (emin + emax)/2.
+      s = xmn**2 + 2.*xmn*eg
+      call tname(it,ctmin,ctmax,tmin,tmax,tstring)
+
+      ia = 0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      call lplot(l,m,lstring)
+c      open(33,file='/s4/adam/marco/ppip/results'
+c     $//'/moments-extraction-method-comparison/model-1b/'
+c     $//'Y_norm_lmax=08'//estring//tstring//lstring,
+c     $ status='old')
+
+c      open(33,file='Y_lmax=08'//estring//tstring//lstring,
+c     $ status='old')
+
+      CALL revinm(he4_parms,'adam'
+     $//'/Y_lmax=08'//estring//tstring//lstring,filename)
+      open(33,file=filename,status='old')
+
+      do imbin=1,mass
+      read(33,*) xx,wynr(imbin,ia),errr(imbin,ia)
+      enddo
+      close(33)
+      enddo
+      enddo
+
+c      ia = 0
+c      do l=0,lmax0
+c      do m=0,l
+c      ia = ia + 1
+c      call lplot(l,m,lstring)
+c      open(33,file='/s4/adam/marco/ppip/final/model-1b/results/'
+c     $//'using-no-fix-fix-below-2/'
+c     $//'Y_norm_lmax=04'//estring//tstring//lstring,
+c     $ status='old')
+c      do imbin=1,mass
+c      read(33,*) xx,wynr(imbin,ia),errr(imbin,ia)
+c      enddo
+c      close(33)
+c      enddo
+c      enddo
+
+
+
+
+
+
+c      goto 333
+
+c     eliminate f0 
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      imbin=55
+      wynrl(ia) = wynr(imbin,ia)
+      enddo
+      enddo
+
+
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      imbin=61
+      wynru(ia) = wynr(imbin,ia)
+      enddo
+      enddo
+
+
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      do imbin=55,61
+      ss = xmid(imbin)**2
+      wynr(imbin,ia) = wynrl(ia)*(61-imbin)/dble(61-55)
+     $               + wynru(ia)*(55-imbin)/dble(55-61)
+      enddo
+      enddo
+      enddo
+
+
+333     continue
+
+
+
+      return
+      end
+
+      function cross_pwa(eg,t,xm2p,tgj,epsf)
+      implicit double precision (a-h,o-z)
+      double complex Y
+
+      common /mbin/ xmmin(200),xmmax(200),xmid(200)
+c      dimension wynr(300,300),errr(300,300)
+      common /wave/ wynr(300,300),errr(300,300)
+      common /bin/ ie,it,mass,lmax,itot
+      common /ener/ emin,emax
+
+
+
+
+      pi = 4.d0*datan(1.d0)
+
+
+      xmn = 0.93827
+      xmp = 0.13857
+
+
+      if (xm2p.lt.xmmin(1)) then
+      imbin =1
+      endif
+      do i=1,mass
+      if ((xm2p.gt.xmmin(i)).and.(xm2p.le.xmmax(i))) then
+      imbin = i
+      endif
+      enddo
+      if (xm2p.gt.xmmax(mass)) then
+      imbin = mass
+      endif
+
+      sum13 = 0.d0
+      ia = 0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      if (m.eq.0) then
+      eps = 1.
+      else
+      eps = 1./2.
+      endif
+      sum13 = sum13 +
+     $    dsqrt(4.*pi)
+     $ *dble((       Y(l, m,tgj,epsf)
+     $     + dconjg(Y(l, m,tgj,epsf)) )/2. )
+     $  *(wynr(imbin,ia)/eps)
+      enddo
+      enddo
+
+
+c----------------
+
+      cross_pwa = sum13
+
+      return
+      end
+
+
+

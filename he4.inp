@@ -1,0 +1,139 @@
+ 'proton'               ! target 'proton' 'neutron' 'deuteron' 'he3' 'h3'
+ 0.5                    ! beam radius
+ 40.0                   ! target lenght
+-10.0                   ! target offset
+ 5.0                    ! laboratory beam energy (GeV)
+ 0.05                   ! E threshold for two charged in CLAS
+  60.   95.             ! Tagged Energy limits (% fraction of Ebeam) (minimum energymust be equal to threshold -> W=1.83 GeV, E=1.315 GeV)
+100.                    ! % fraction "good"/"total"
+ 0.                     ! energy FWHM (%)   channels 5 7 11 15 19 25 27 28 30 31 35    *
+32 *
+ 0.0                    ! definition of t limit
+ 1			! select of distrib.(1=weighted,0=phasespace)
+ 10000                  ! number of events
+ 10                     ! number of events written on control file
+ 1                      ! omega exctraction (0=standard,1=ds_fn fun xtraction) 
+ 2                      ! omega exctraction mode (1=f(w,th),2=g(w,-t) xtraction)
+ 1002                   ! random number randomizer.....
+ 1                      ! BOS   output (0/1 =yes/no)
+ 1                      ! HBOOK output (0/1 =yes/no) 
+ 0                      ! generate inside fiducial cuts (0/1 =yes/no)
+1920.                   ! torus current value (used for fiducial cuts)
+ 3                      ! FOR ZETA+ANALYSIS ONLY: fix final state (0 = no; 1 = charged (k+k0 on p); 2 = neutral (k0k0 on p); 3 = neutral (kpkm on n))
+ 1                      ! FOR ZETA+ANALYSIS ONLY: fix angular distribution (1 = t-exchange; 2 = exchange)
+ 1                      ! FOR K0 ANALYSIS ONLY: fix final state (0 = no; 1 = charged (pi+pi-))
+
+                ***********************
+                ***  CHANNEL TABLE  ***
+                ***********************
+1 2 5 6 7 11 12 15 16 19 21 22 25 27 28 30 31 32 33 *
+
+  PHOTON INTERACTION OUTPUT CHANNELS
+ 1)  gamma  +  p  --->  pi+  +  n
+ 2)  gamma  +  p  --->  pi0  +  p
+ 3)  gamma  +  n  --->  pi-  +  p
+ 4)  gamma  +  n  --->  pi0  +  n
+ 5)  gamma  +  p  --->  delta++ +  pi-
+ 6)  gamma  +  p  --->  delta+  +  pi0
+ 7)  gamma  +  p  --->  delta0  +  pi+
+ 8)  gamma  +  n  --->  delta+  +  pi-
+ 9)  gamma  +  n  --->  delta0  +  pi0
+ 10) gamma  +  n  --->  delta-  +  pi+
+ 11) gamma  +  p  --->  rho0  +  p
+ 12) gamma  +  p  --->  rho+  +  n
+ 13) gamma  +  n  --->  rho-  +  p
+ 14) gamma  +  n  --->  rho0  +  n
+ 15) gamma  +  p  --->  pi+  +  pi-  +  p                           
+ 16) gamma  +  p  --->  pi0  +  pi+  +  n                           
+ 17) gamma  +  n  --->  pi+  +  pi-  +  n                           
+ 18) gamma  +  n  --->  pi0  +  pi-  +  p                           
+ 19) gamma  +  p  --->  omega  +  p                                 
+ 20) gamma  +  n  --->  omega  +  n                                 
+ 21) gamma  +  p  --->  pi+  +  pi-  +  pi0  +  p                   
+ 22) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  n                   
+ 23) gamma  +  n  --->  pi+  +  pi-  +  pi0  +  n                   
+ 24) gamma  +  n  --->  pi+  +  pi-  +  pi-  +  p                   
+ 25) gamma  +  p  --->  phi  +  p                                   
+ 26) gamma  +  n  --->  phi  +  n                                   
+ 27) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  p                   
+ 28) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  pi0  +  p             
+ 29) gamma  +  p  --->  pi+  +  pi+  +  pi+  +  pi-  +  pi-  +  n 
+ 30) gamma  +  p  --->  lambda  +  kappa+                
+ 31) gamma  +  p  --->  kappa+  +  kappa-  +  p
+ 32) gamma  +  p  --->  eta  +  p
+ 33) gamma  +  p  --->  f2  +  p
+ 34) gamma  +  n  --->  f2  +  n
+ 35) gamma  +  p  --->  omega_mod  +  p
+ 40) gamma  +  p  --->  p   +  anti-p   +  p
+ 41) gamma  +  p  --->  n   +  anti-n   +  p
+ 42) gamma  +  p  --->  zeta+  +  kappa0                
+ 42) gamma  +  p  --->  p   +  anti-p   +  p
+ 43) gamma  +  p  --->  n   +  anti-n   +  p
+ 44) gamma  +  p  --->  ppbar + p
+ 45) gamma  +  p  --->  pp    + anti-p
+
+
+ 36) gamma  +  p  --->  lambda*+  kappa+
+ 37) gamma  +  p  --->  sigma- +  kappa+ + pi+
+ 38) gamma  +  p  --->  sigma+ +  kappa+ + pi-
+ 39) gamma  +  n  --->  kappa+ +  kappa- + n
+ 46) gamma  +  p  --->  kappa0 +  kappa+ + n
+ 47) gamma  +  p  --->  kappas +  kappal + p
+ 48) gamma  +  p  --->  zeta+  +  kappa0
+ 49) gamma  +  n  --->  zeta+  +  kappa-
+ 64) gamma  +  d  --->  kappa- +  zeta+  + p
+ 86) gamma  +  p  --->  f0(980)+  p 
+ 87) gamma  +  p  --->  pi+    +  pi-    + p (Adam Sczsepaniak)
+ 88) gamma  +  p  --->  phi    +  eta    + p
+ 89) gamma  +  p  --->  p + pi0 + eta
+ 90) gamma  +  p  --->  kappa* +  zeta+
+ 91) gamma  +  p  --->  kappa* +  kappa+ + n
+ 92) gamma  +  p  --->  kappa+ +  hyper0
+ 93) gamma  +  p  --->  kappa- +  hyper++
+ 94) gamma  +  p  --->  kappa0* +  kappa+ + n
+ 95) gamma  +  p  --->  kappa+ +  kappa- + pi+ + n
+ 96) gamma  +  p  --->  zeta++ +  kappa-
+ 97) gamma  +  p  --->  sigma+ +  kappa0
+ 98) gamma  +  p  --->  zeta+  +  kappa0 (Ho1)
+ 99) gamma  +  p  --->  zeta+  +  kappa0 (Ho2)
+  
+ 51) gamma  +  3He  --->  p + p + n
+ 52) gamma  +  3He  --->  p + p + n + pi0
+ 53) gamma  +  3He  --->  p + p + p + pi-  
+ 54) gamma  +  3He  --->  p + p + n + pi+  
+ 55) gamma  +  3He  --->  3He + pi0  
+ 56) gamma  +  3He  --->  3H  + pi+ 
+ 57) gamma  +  3He  --->  d  + p 
+ 58) gamma  +  3He  --->  d  + p + pi0 
+ 59) gamma  +  3He  --->  d  + n + pi+ 
+ 60) gamma  +  d    --->  p  + n 
+ 61) gamma  +  d    --->  p  + n + pi0
+ 62) gamma  +  d    --->  p  + p + pi-
+ 63) gamma  +  d    --->  n  + p + pi+
+ 70) gamma  +  pp   --->  p  + p
+ 71) gamma  +  pp   --->  p  + p + pi0
+ 72) gamma  +  pp   --->  p  + n + pi+
+ 80) gamma  +  d    --->  dibaryon + pi-
+
+ 81) gamma  +  p    --->  dipion + p
+-------------------------------- RESONANCE DECAY CHANNELS
+ 101) delta++ decay
+ 102) delta+  decay
+ 103) delta0  decay
+ 104) delta-  decay
+ 105) rho+    decay
+ 106) rho0    decay
+ 107) rho-    decay
+ 109) phi     decay
+ 110) lambda  decay
+ 112) f2      decay
+ 113) ppbar   decay
+ 114) pp      decay
+ 115) zeta+   decay
+ 116) s11     decay
+ 117) dipion  decay
+ 118) lambda*  decay
+
+--------------------------------------------------------------------------
+
+
