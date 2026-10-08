@@ -1,0 +1,91 @@
+ 'proton'               ! target 'proton' 'neutron' 'deuteron' 'he3' 'h3'
+ 6.                     ! laboratory beam energy (GeV)
+ 0.3                    ! E threshold for two charged in CLAS
+ 20  85             ! Scattered electron Energy limits (% fraction of Ebeam)
+ 100.                   ! % fraction "good"/"total"
+ 0.                     ! energy FWHM (%)   channels 5 7 11 15 19 25 27 28 30 31 35    *
+ 5 7 11 15 19 25 27 28 30 31 35  *
+0.                    ! definition of t limit
+ 1			! select of distrib.(1=weighted,0=phasespace)
+ 1000                  ! number of events
+ 50                     ! number of events written on control file
+ 1                      ! omega exctraction (0=standard,1=ds_fn fun xtraction) 
+ 2                      ! omega exctraction mode (1=f(w,th),2=g(w,-t) xtraction)
+1000                     ! random number randomizer.....
+ 1                      ! BOS   output (0/1 =yes/no)
+ 1                      ! HBOOK output (0/1 =yes/no)
+
+                ***********************
+                ***  CHANNEL TABLE  ***
+                ***********************
+
+  PHOTON INTERACTION OUTPUT CHANNELS
+ 1)  gamma  +  p  --->  pi+  +  n
+ 2)  gamma  +  p  --->  pi0  +  p
+ 3)  gamma  +  n  --->  pi-  +  p
+ 4)  gamma  +  n  --->  pi0  +  n
+ 5)  gamma  +  p  --->  delta++ +  pi-
+ 6)  gamma  +  p  --->  delta+  +  pi0
+ 7)  gamma  +  p  --->  delta0  +  pi+
+ 8)  gamma  +  n  --->  delta+  +  pi-
+ 9)  gamma  +  n  --->  delta0  +  pi0
+ 10) gamma  +  n  --->  delta-  +  pi+
+ 11) gamma  +  p  --->  rho0  +  p
+ 12) gamma  +  p  --->  rho+  +  n
+ 13) gamma  +  n  --->  rho-  +  p
+ 14) gamma  +  n  --->  rho0  +  n
+ 15) gamma  +  p  --->  pi+  +  pi-  +  p
+ 16) gamma  +  p  --->  pi0  +  pi+  +  n
+ 17) gamma  +  n  --->  pi+  +  pi-  +  n
+ 18) gamma  +  n  --->  pi0  +  pi-  +  p
+ 19) gamma  +  p  --->  omega  +  p
+ 20) gamma  +  n  --->  omega  +  n
+ 21) gamma  +  p  --->  pi+  +  pi-  +  pi0  +  p
+ 22) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  n
+ 23) gamma  +  n  --->  pi+  +  pi-  +  pi0  +  n
+ 24) gamma  +  n  --->  pi+  +  pi-  +  pi-  +  p
+ 25) gamma  +  p  --->  phi  +  p
+ 26) gamma  +  n  --->  phi  +  n
+ 27) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  p
+ 28) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  pi0  +  p
+ 29) gamma  +  p  --->  pi+  +  pi+  +  pi+  +  pi-  +  pi-  +  n
+ 30) gamma  +  p  --->  lambda  +  kappa+
+ 31) gamma  +  p  --->  kappa+  +  kappa-  +  p
+ 32) gamma  +  p  --->  eta  +  p
+ 33) gamma  +  p  --->  f2  +  p
+ 34) gamma  +  n  --->  f2  +  n
+ 35) gamma  +  p  --->  pi+ + pi- + pi0 + p : 3 pions phase space corrected in t
+ 40) gamma  +  p  --->  p   +  anti-p   +  p
+ 41) gamma  +  p  --->  n   +  anti-n   +  p
+
+ 51) gamma  +  3He  --->  p + p + n
+ 52) gamma  +  3He  --->  p + p + n + pi0
+ 53) gamma  +  3He  --->  p + p + p + pi-
+ 54) gamma  +  3He  --->  p + p + n + pi+
+ 55) gamma  +  3He  --->  3He + pi0
+ 56) gamma  +  3He  --->  3H  + pi+
+ 57) gamma  +  3He  --->  d  + p
+ 58) gamma  +  3He  --->  d  + p + pi0
+ 59) gamma  +  3He  --->  d  + n + pi+
+ 60) gamma  +  d    --->  p  + n
+ 61) gamma  +  d    --->  p  + n + pi0
+ 62) gamma  +  d    --->  p  + p + pi-
+ 63) gamma  +  d    --->  n  + p + pi+
+ 70) gamma  +  pp   --->  p  + p
+ 71) gamma  +  pp   --->  p  + p + pi0
+ 72) gamma  +  pp   --->  p  + n + pi+
+ 80) gamma  +  d    --->  dibaryon + pi-
+-------------------------------- RESONANCE DECAY CHANNELS
+ 101) delta++ decay
+ 102) delta+  decay
+ 103) delta0  decay
+ 104) delta-  decay
+ 105) rho+    decay
+ 106) rho0    decay
+ 107) rho-    decay
+ 109) phi     decay
+ 110) lambda  decay
+ 112) f2      decay
+--------------------------------------------------------------------------
+
+

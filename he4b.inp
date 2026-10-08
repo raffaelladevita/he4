@@ -1,0 +1,18 @@
+ 'proton'  		! target 'proton' 'neutron' 'deuteron' 'he3' 'h3'
+ 4.11			! laboratory beam energy (GeV)
+ 0.3			! E threshold for two charged in CLAS
+ 72.  95.3		! Tagged Energy limits (% fraction of Ebeam) 
+ 100.			! % fraction "good"/"total" 
+ 0.			! energy FWHM (%)
+ 1 2 5 6 7 11 12 15 16 19 21 22 25 27 28 29 30 31 32 33 40 41 *            
+ -0.0			! definition of t limit
+ 0			! select of distrib.(0=weighted,1=phasespace)
+ 10000                  ! number of events
+ 50                     ! number of events written on control file
+ 103                    ! random number randomizer.....
+ 1                      ! BOS   output (0/1 =yes/no)
+ 1                      ! HBOOK output (0/1 =yes/no)
+
+
+
+

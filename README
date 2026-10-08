@@ -1,0 +1,303 @@
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+                 event generator he4 - user instructions
+
+---------------------------------------------------------------------------
+usage: he4_SunOS xxx (without extension)
+where xxx.inp is the input file (see in the following)
+
+the program creates, (depending on data cards switched to 1):
+xxx.hbook  -> HBOOK ntple
+XXX.BOS    -> BOS file
+xxx.out    -> diagnostic file
+---------------------------------------------------------------------------
+present energy range:  1 < w < 3.5 GeV
+---------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------
+exemple of input file:
+
+ 'proton'  		! target 'proton' 'neutron' 'deuteron' 'he3' 'h3'
+ 7.			! laboratory beam energy (GeV)
+ 0.3			! E threshold for two charged in CLAS
+ 72.  75.		! Tagged Energy limits (% fraction of Ebeam) 
+ 100.			! % fraction "good"/"total" 
+ 0.			! energy FWHM (%)
+ 1,2,3,4,5,8,15,16,17,24,33,36 *
+ 3.0			! definition of t limit
+ 1			! select of distrib.(0=phasespace, 1=weighted)
+ 10000			! number of events
+ 50                     ! number of events written on control file
+ 103			! random number randomizer.....
+ 1			! BOS   output (0/1 =yes/no)
+ 1			! HBOOK output (0/1 =yes/no)
+
+---------------------------------------------------------------------------
+ATTENTION : the channel list MUST END with the symbol " * "
+       IF :  jch = -1 => all proton channels are ON
+       IF :  jch = -2 => all neutron channels are ON
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+=>   if you add a new channel, please update also 
+=>   the reaction channel list  reported below !!!
+-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------
+related data files are read by the subroutine H_READ.F. They are:
+
+* XTOT.MTX
+contains, in 50 MeV steps, the total Xsect values according to the format:
+	do j=1,100
+	   read(55,*,end=335) jch
+	   read(55,*) (sigr(jch,k),k=1,251)
+	enddo
+
+* CHAN_DISANG.MTX
+contains, in 50 MeV steps, the differential Xsect values given in 19 
+points between 0 and 180 deg (in 10 deg steps), according to the format:
+      do nch=1,nchan
+       read(55,*,end=333) jch
+       do inw=1,50
+	read(55,*) w
+	read(55,*) (xchan(jch,inw,inth),inth=0,18)
+       end do
+      end do
+
+* PCLE_DISANG.MTX
+contains the decay angular distribution of the resonances, stored in
+21 teta intervals and 41 phi intervals according to the format:
+       do ith=0,20
+	  do iph=0,40
+	     read(55,*) th,ph,xpcle(jch,ith,iph)
+          end do
+       end do
+--------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////
+--------------------------------------------------------------------------
+
+                   INSTRUCTIONS TO ADD A NEW CHANNEL
+
+
+a)........................................................................ 
+ALWAYS update XTOT.MTX
+The new channel must be labeled by a new "jch" value not yet used, and
+the data block can be appended to the XTOT.MTX existing file.
+jch label notation:
+   1- 49  reaction on single nucleon (p/n)
+  50-100  reaction on nucleon clusters: He3, d, diproton, ..
+ 101-200  risonances decay
+ 
+b)........................................................................
+IF NECESSARY, update CHAN_DISANG.MTX
+if the "jch" label is not present in CHAN_DISANG.MTX, the program
+automatically chooses phase-space distribution (genbod);
+otherwise, it uses the subroutine GENEVT.F: in this case, ATTENTION!
+  IN GENEVT.F EXTRACTED kinem values:
+  REFER TO MESON for: rho-N, phi-N, omega-N, eta-N, f2-N channels
+  REFER TO DELTA for: delta-N channels
+  REFER TO MESON for: delta decay
+  REFER TO POSITIVE MESON for: rho decay, phi decay 
+  AND ARE ASSIGNED TO PARTIC #1
+if the order in which particles are given in DECAY.F (see below) is
+differnt, the program automatically change the internal order
+BUT IT IS BETTER TO CHECK....
+ 
+c)........................................................................
+IF NECESSARY, update PCLE_DISANG.MTX
+if the "jch" label is not present in CHAN_DISANG.MTX, the program
+automatically chooses phase-space distribution (genbod)
+
+d)........................................................................
+ALWAYS update the subroutine H_READ.F
+You must add in:
+   data ichan_p/ ...... /
+   data ichan_n/ ...... /
+the new protone/neutrone channel.....
+
+e)........................................................................
+IF NECESSARY update the subroutine DECAY.F
+inserting a new instruction block similar to:
+
+	partic(5,0)='proton'    |
+	partic(5,1)='pi-'       |  gamma + p -> p + D++ + pi-
+	partic(5,2)='delta++'   |  
+	numpart(5)=2            |
+
+	partic(17,0)='neutron'  |
+	partic(17,1)='pi+'      |
+	partic(17,2)='pi-'      |  gamma + n -> n + pi+ + pi-
+	partic(17,3)='neutron'  |
+	numpart(17)=3           |
+
+where, for jch=N:
+	partic(N,0)= target    
+	partic(N,1)= 1 part. 
+	partic(N,2)= 2 part. 
+	..............
+	partic(N,n)= n part.  
+	numpart(N) = n (numer of pcle in the final state)
+
+f)........................................................................
+IF NECESSARY, update subroutine TREE.F
+if some of the added new particles decay (as, e.g. delta++, rho0, eta,..)
+a new instruction block similar to the following mus be inserted:
+
+c   delta++ decay....
+	if(p.eq.'delta++')    then
+	   np=2
+	   pf(1)='pi+'
+	   pf(2)='proton'
+	   return
+	endif
+	
+c   delta0 decay....
+	if(p.eq.'delta0')     then
+	   nbr=2
+	   br(1)=0.33
+	   br(2)=0.67
+	   q=rran()
+	   if(q.lt.br(1)) then
+	      np=2
+	      pf(1)='pi-'
+	      pf(2)='proton'
+	   else
+	      np=2
+	      pf(1)='pi0'
+	      pf(2)='neutron'
+	   endif
+	   return
+	endif
+
+c   eta decay....
+	if(p.eq.'eta')        then
+	   nbr=4
+	   br(1)=0.39
+	   br(2)=0.32
+	   br(3)=0.24
+	   br(4)=0.05
+	   q=rran()
+	   if(q.lt.br(1)) then
+	      np=2
+	      pf(1)='photon'
+	      pf(2)='photon'
+	   else if(q.lt.br(1)+br(2))  then
+	      np=3
+	      pf(1)='pi0'
+	      pf(2)='pi0'
+	      pf(3)='pi0'
+	   else if(q.lt.br(1)+br(2)+br(3))  then
+	      np=3
+	      pf(1)='pi+'
+	      pf(2)='pi0'
+	      pf(3)='pi-'
+	   else if(q.lt.br(1)+br(2)+br(3)+br(4))  then
+	      np=3
+	      pf(1)='pi+'
+	      pf(2)='pi-'
+	      pf(3)='photon'
+
+	   endif	   
+	   
+f)........................................................................
+IF NECESSARY, update both functions RMASS.F and CHARGE.F adding the values 
+of mass and charge of the new particle
+
+g)........................................................................
+IF NECESSARY, update the function CHAN.F where a new "jch" value (>100)
+must be assigned to the new resonance decay mode.
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+		***********************
+		***  CHANNEL TABLE  ***
+		***********************
+
+  PHOTON INTERACTION OUTPUT CHANNELS
+ 1)  gamma  +  p  --->  pi+  +  n
+ 2)  gamma  +  p  --->  pi0  +  p
+ 3)  gamma  +  n  --->  pi-  +  p
+ 4)  gamma  +  n  --->  pi0  +  n
+ 5)  gamma  +  p  --->  delta++ +  pi-
+ 6)  gamma  +  p  --->  delta+  +  pi0
+ 7)  gamma  +  p  --->  delta0  +  pi+
+ 8)  gamma  +  n  --->  delta+  +  pi-
+ 9)  gamma  +  n  --->  delta0  +  pi0
+ 10) gamma  +  n  --->  delta-  +  pi+
+ 11) gamma  +  p  --->  rho0  +  p
+ 12) gamma  +  p  --->  rho+  +  n
+ 13) gamma  +  n  --->  rho-  +  p
+ 14) gamma  +  n  --->  rho0  +  n
+ 15) gamma  +  p  --->  pi+  +  pi-  +  p                           
+ 16) gamma  +  p  --->  pi0  +  pi+  +  n                           
+ 17) gamma  +  n  --->  pi+  +  pi-  +  n                           
+ 18) gamma  +  n  --->  pi0  +  pi-  +  p                           
+ 19) gamma  +  p  --->  omega  +  p                                 
+ 20) gamma  +  n  --->  omega  +  n                                 
+ 21) gamma  +  p  --->  pi+  +  pi-  +  pi0  +  p                   
+ 22) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  n                   
+ 23) gamma  +  n  --->  pi+  +  pi-  +  pi0  +  n                   
+ 24) gamma  +  n  --->  pi+  +  pi-  +  pi-  +  p                   
+ 25) gamma  +  p  --->  phi  +  p                                   
+ 26) gamma  +  n  --->  phi  +  n                                   
+ 27) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  p                   
+ 28) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  pi0  +  p             
+ 29) gamma  +  p  --->  pi+  +  pi+  +  pi+  +  pi-  +  pi-  +  n 
+ 30) gamma  +  p  --->  lambda  +  kappa+                
+ 31) gamma  +  p  --->  kappa+  +  kappa-  +  p
+ 32) gamma  +  p  --->  eta  +  p
+ 33) gamma  +  p  --->  f2  +  p
+ 34) gamma  +  n  --->  f2  +  n
+ 40) gamma  +  p  --->  p   +  anti-p   +  p
+ 41) gamma  +  p  --->  n   +  anti-n   +  p
+
+ 51) gamma  +  3He  --->  p + p + n
+ 52) gamma  +  3He  --->  p + p + n + pi0
+ 53) gamma  +  3He  --->  p + p + p + pi-  
+ 54) gamma  +  3He  --->  p + p + n + pi+  
+ 55) gamma  +  3He  --->  3He + pi0  
+ 56) gamma  +  3He  --->  3H  + pi+ 
+ 57) gamma  +  3He  --->  d  + p 
+ 58) gamma  +  3He  --->  d  + p + pi0 
+ 59) gamma  +  3He  --->  d  + n + pi+ 
+ 60) gamma  +  d    --->  p  + n 
+ 61) gamma  +  d    --->  p  + n + pi0
+ 62) gamma  +  d    --->  p  + p + pi-
+ 63) gamma  +  d    --->  n  + p + pi+
+ 70) gamma  +  pp   --->  p  + p
+ 71) gamma  +  pp   --->  p  + p + pi0
+ 72) gamma  +  pp   --->  p  + n + pi+
+ 80) gamma  +  d    --->  dibaryon + pi-
+-------------------------------------------------------------------------
+ RESONANCE DECAY CHANNELS
+ 101) delta++ decay 
+ 102) delta+  decay 
+ 103) delta0  decay 
+ 104) delta-  decay 
+ 105) rho+    decay 
+ 106) rho0    decay 
+ 107) rho-    decay 
+ 109) phi     decay 
+ 110) lambda  decay
+ 112) f2      decay 
+--------------------------------------------------------------------------
+
+useful formula:
+
+s,w
+	s = rm(1)**2+2.*p0(4)*eglab-2.*p0(3)*eglab
+	w = sqrt(s)
+
+t
+	-t = p - p'
+	t = p' - p
+	where:
+	p  = final   proton 4-mom
+	p' = initial proton 4-mom
+	in case of    g + p -> p + r   (r = particle, res, pair, ...)
+	t =  (pg-pR)^2 = mr^2 -2*Eg*Er + 2*|pg|*|pr|*cos(teta_gr)
+	t =  mr^2 -2*Eg_cm*Er_cm + 2*Eg_cm*|pr_cm|*cos(teta_gr)
+	Eg_cm = (w^2-mp^2)/2w
+	Er_cm = (w^2+mr^2-mp^2)/2w
+
+
