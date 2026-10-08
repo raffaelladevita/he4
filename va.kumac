@@ -1,0 +1,10 @@
+al/cre t -(.4936**2-2*egamma*(E_k-p_k*cos(th_k/57.3)))
+al/cre egcm (w**2-0.938**2)/2/w
+al/cre pcm sqrt(abs((w**2-(0.4936**2+1.52**2))**2-4*0.4936**2*1.52**2))/2./w
+
+al/cre t0 -(.4936**2-2*(egcm)*(sqrt((pcm)**2+0.4936**2)-(pcm)))
+
+al/cre tv (t)-(t0) 
+
+
+

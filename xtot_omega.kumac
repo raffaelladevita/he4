@@ -1,0 +1,11 @@
+macro xtot
+vector/create xtot(251,22)
+vector/cre x_omega(251)
+HISTOGRAM/CREATE/1DHISTO '1000' 'x_omega' '251' '1.' '3.5' '0.'
+vector/read xtot xtot1.mtx
+do j=1,251
+ ve/inp x_omega([j]) xtot([j],13)
+enddo 
+hi/put/cont 1000 x_omega
+set hcol 2
+hi/plot 1000   

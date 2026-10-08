@@ -1,0 +1,70 @@
+macro xdiff_omega
+vector/create xdiff(19,50)
+vector/cre xdiffw1(19)
+vector/cre xdiffw2(19)
+vector/cre xdiffw3(19)
+vector/cre xdiffw4(19)
+vector/cre xdiffw5(19)
+vector/cre xdiffw6(19)
+vector/cre xdiffw7(19)
+vector/cre xdiffw8(19)
+vector/cre xdiffw9(19)
+HISTOGRAM/CREATE/1DHISTO '1000' 'xdiff_omega (2.5 Gev-2.9 Gev)' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1001' 'xdiff_omegaw2' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1002' 'xdiff_omegaw3' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1003' 'xdiff_omegaw4' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1004' 'xdiff_omegaw5' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1005' 'xdiff_omegaw6' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1006' 'xdiff_omegaw7' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1007' 'xdiff_omegaw8' '19' '0.' '180.' '0.'
+HISTOGRAM/CREATE/1DHISTO '1008' 'xdiff_omegaw9' '19' '0.' '180.' '0.'
+vector/read xdiff xdiff_omega.mtx
+do j=1,19
+ve/inp xdiffw1([j]) xdiff([j],31)
+* w1 = 2.550 Gev
+ve/inp xdiffw2([j]) xdiff([j],34)
+* w2 = 2.700 Gev
+ve/inp xdiffw3([j]) xdiff([j],38)
+* w3 = 2.900 Gev
+ve/inp xdiffw4([j]) xdiff([j],30)
+* w4 = 2.500 Gev
+ve/inp xdiffw5([j]) xdiff([j],32)
+* w5 = 2.600 Gev
+ve/inp xdiffw6([j]) xdiff([j],33)
+* w6 = 2.650 Gev
+ve/inp xdiffw7([j]) xdiff([j],35)
+* w7 = 2.750 Gev
+ve/inp xdiffw8([j]) xdiff([j],36)
+* w8 = 2.800 Gev
+ve/inp xdiffw9([j]) xdiff([j],37)
+* w9 = 2.850 Gev
+enddo 
+hi/put/cont 1000 xdiffw1
+hi/put/cont 1001 xdiffw2
+hi/put/cont 1002 xdiffw3
+hi/put/cont 1003 xdiffw4
+hi/put/cont 1004 xdiffw5
+hi/put/cont 1005 xdiffw6
+hi/put/cont 1006 xdiffw7
+hi/put/cont 1007 xdiffw8
+hi/put/cont 1008 xdiffw9
+opt logy
+set hcol 1
+hi/plot 1000 c
+set hcol 2 
+hi/plot 1001 c,s 
+set hcol 4
+hi/plot 1002 c,s
+set hcol 3
+hi/plot 1003 c,s
+set hcol 5
+hi/plot 1004 c,s
+set hcol 6
+hi/plot 1005 c,s
+set hcol 7
+hi/plot 1006 c,s
+set hcol 8
+hi/plot 1007 c,s
+set hcol 5
+hi/plot 1008 c,s
+

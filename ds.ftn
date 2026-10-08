@@ -1,0 +1,9 @@
+*   funzione xsec_diff di omega al variare di w e teta
+*                      x = w (Gev)    y=teta (gradi)
+	
+	function ds(x,y)
+	ds1=(-4.99+15.9*x)*exp(-0.5*((y-(3.45+0.3*x))/(39.63-9.27*x))**2)
+	ds2=(0.52+0.17*x)*exp(-0.5*((y-(193.6-22.4*x))/(-256.9+116.3*x))**2)
+	ds=(2.42-0.44*x)*(ds1+ds2)*sin(y*3.14/180)
+	end
+*   N.B. per x < 2.50 Gev e x > 2.90 Gev  la funzione va a zero

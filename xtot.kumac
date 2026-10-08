@@ -1,0 +1,118 @@
+macro xtot
+vector/create xtot(251,22)
+vector/cre x_sum(251)
+vector/cre x1(251)
+vector/cre x2(251)
+vector/cre x5(251)
+vector/cre x6(251)
+vector/cre x7(251)
+vector/cre x11(251)
+vector/cre x12(251)
+vector/cre x15(251)
+vector/cre x19(251)
+vector/cre x21(251)
+vector/cre x22(251)
+vector/cre x25(251)
+vector/cre x27(251)
+vector/cre x28(251)
+vector/cre x29(251)
+vector/cre x32(251)
+vector/cre x40(251)
+vector/cre x41(251)
+* TABELLA DI CONVERSIONE tra xtot.mtx e variabile xtot nella macro 
+*
+*                   xtot.mtx          var xtot 
+*
+*                      1                  1
+*		       .                  .
+*		       .                  .
+*                      .                  .
+*                      9                  9
+*                      11                 10 
+*                      12                 11
+*                      15                 12
+*                      19                 13
+*                      21                 14
+*                      22                 15
+*                      25                 16
+*                      27                 17
+*                      28                 18
+*                      29                 19 
+*                      32                 20 
+*                      40                 21 
+*                      41                 22
+*
+*                  TABELLA DI RIF. NUMERO - CANALE
+*
+*  PHOTON INTERACTION OUTPUT CHANNELS
+* 1)  gamma  +  p  --->  pi+  +  n
+* 2)  gamma  +  p  --->  pi0  +  p
+* 3)  gamma  +  n  --->  pi-  +  p
+* 4)  gamma  +  n  --->  pi0  +  n
+* 5)  gamma  +  p  --->  delta++ +  pi-
+* 6)  gamma  +  p  --->  delta+  +  pi0
+* 7)  gamma  +  p  --->  delta0  +  pi+
+* 8)  gamma  +  n  --->  delta+  +  pi-
+* 9)  gamma  +  n  --->  delta0  +  pi0
+* 10) gamma  +  n  --->  delta-  +  pi+
+* 11) gamma  +  p  --->  rho0  +  p
+* 12) gamma  +  p  --->  rho+  +  n
+* 13) gamma  +  n  --->  rho-  +  p
+* 14) gamma  +  n  --->  rho0  +  n
+* 15) gamma  +  p  --->  pi+  +  pi-  +  p
+* 16) gamma  +  p  --->  pi0  +  pi+  +  n
+* 17) gamma  +  n  --->  pi+  +  pi-  +  n
+* 18) gamma  +  n  --->  pi0  +  pi-  +  p
+* 19) gamma  +  p  --->  omega  +  p
+* 20) gamma  +  n  --->  omega  +  n
+* 21) gamma  +  p  --->  pi+  +  pi-  +  pi0  +  p
+* 22) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  n
+* 23) gamma  +  n  --->  pi+  +  pi-  +  pi0  +  n
+* 24) gamma  +  n  --->  pi+  +  pi-  +  pi-  +  p
+* 25) gamma  +  p  --->  phi  +  p
+* 26) gamma  +  n  --->  phi  +  n
+* 27) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  p
+* 28) gamma  +  p  --->  pi+  +  pi+  +  pi-  +  pi-  +  pi0  +  p
+* 29) gamma  +  p  --->  pi+  +  pi+  +  pi+  +  pi-  +  pi-  +  n
+* 30) gamma  +  p  --->  lambda  +  kappa+
+* 31) gamma  +  p  --->  kappa+  +  kappa-  +  p
+* 32) gamma  +  p  --->  eta  +  p
+* 33) gamma  +  p  --->  f2  +  p
+* 34) gamma  +  n  --->  f2  +  n
+* 40) gamma  +  p  --->  p   +  anti-p   +  p
+* 41) gamma  +  p  --->  n   +  anti-n   +  p *  
+HISTOGRAM/CREATE/1DHISTO '1234' 'xtot_xtotomega' '251' '1.' '3.5' '0.'
+HISTOGRAM/CREATE/1DHISTO '1000' 'x_sum' '251' '1.' '3.5' '0.'
+vector/read xtot xtot1.mtx
+do j=1,251
+ ve/inp x1([j]) xtot([j],1)
+ ve/inp x2([j]) xtot([j],2)
+ve/inp x5([j]) xtot([j],5)
+ve/inp x6([j]) xtot([j],6)
+ve/inp x7([j]) xtot([j],7)
+ve/inp x11([j]) xtot([j],10)
+ve/inp x12([j]) xtot([j],11)
+ve/inp x15([j]) xtot([j],12)
+ve/inp x19([j]) xtot([j],13)
+ve/inp x21([j]) xtot([j],14)
+ve/inp x22([j]) xtot([j],15)
+ve/inp x25([j]) xtot([j],16)
+ve/inp x27([j]) xtot([j],17)
+ve/inp x28([j]) xtot([j],18)
+ve/inp x29([j]) xtot([j],19)
+ve/inp x32([j]) xtot([j],20)
+ve/inp x40([j]) xtot([j],21)
+ve/inp x41([j]) xtot([j],22)
+enddo 
+sigma x_sum=x1+x2+x5+x6+x7+x11+x12+x15+x19+x21+x22+x25+x27+x28+x29+x32+x40+x41
+hi/put/cont 1234 x_sum
+hi/put/cont 1000 x19
+*opt logy
+set hcol 4
+hi/plot 1234 c
+set hcol 2
+hi/plot 1000 c,s
+
+
+
+  

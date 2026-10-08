@@ -1,0 +1,1429 @@
+      subroutine init(eg,t)
+      implicit double precision (a-h,o-z)
+      character*3 cemin,cemax
+      character*10 estring
+      character*3 ctmin,ctmax
+      character*10 tstring
+      character*2 clm
+      character*9 lstring
+      character*120 he4_parms
+      character*120 filename
+
+      common /mbin/ xmmin(200),xmmax(200),xmid(200)
+
+      common /bin/ ie,it,mass,lmax,itot
+      common /parameters/ param(348)
+      common /parerrors/ err(348)
+      common /ener/ emin,emax
+      common /wave/ wynr(300,300),errr(300,300)
+      dimension wynrl(300),wynru(300)
+      parameter (he4_parms  = 'GENOVA_PARMS')
+
+      call frac 
+      mass = 100
+      lmax = 10 
+      do l=0,lmax
+      do m=0,l
+      itot = itot + 1
+      enddo
+      enddo
+
+
+
+      do imbin=1,mass
+      xmmin(imbin) = dble(imbin-1)*0.010 + 0.400
+      xmmax(imbin) = dble(imbin  )*0.010 + 0.400
+      xmid(imbin) = (xmmin(imbin)+xmmax(imbin))/2.
+      enddo
+
+
+      if (eg.lt.3.2) then
+      ie = 1
+      endif
+      if ((eg.ge.3.2).and.(eg.lt.3.4)) then
+      ie = 2
+      endif
+      if ((eg.ge.3.4).and.(eg.lt.3.6)) then
+      ie = 3
+      endif
+      if ((eg.ge.3.6)) then
+      ie = 4
+      endif 
+
+      if (t.lt.0.4) then
+      it = 3 
+      endif 
+      if ((t.ge.0.4).and.(t.lt.0.5)) then
+      it = 4
+      endif
+      if ((t.ge.0.5).and.(t.lt.0.6)) then
+      it = 5
+      endif
+      if ((t.ge.0.6).and.(t.lt.0.7)) then
+      it = 6
+      endif
+      if ((t.ge.0.7).and.(t.lt.0.8)) then
+      it = 7
+      endif
+      if ((t.ge.0.8).and.(t.lt.0.9)) then
+      it = 8
+      endif
+      if (t.ge.0.9) then
+      it = 9
+      endif  
+
+      call ename(ie,cemin,cemax,emin,emax,estring) 
+      eg = (emin + emax)/2. 
+      s = xmn**2 + 2.*xmn*eg
+      call tname(it,ctmin,ctmax,tmin,tmax,tstring)
+
+      call init0
+
+c      open(33,file='/s4/adam/marco/ppip/results/'
+c     $//'fit/model-1b/nofix/'
+c     $//'/param_good04'//estring//tstring,status='old')
+
+      CALL revinm(he4_parms,'adam'
+     $//'/param_good04'//estring//tstring,filename)
+
+      open(33,file=filename,status='old')
+       write(*,*) ie,it
+      do i=1,348
+      read(33,33) ii,param(ii),err(ii)
+      enddo
+      close(33)
+33    format(7x,'param(',I3,')','=',2x,f12.5,2x,f12.5)
+
+
+
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      do imbin=1,mass
+      ss = xmid(imbin)**2
+      call plotwave(ss,l,m,wynr(imbin,ia))
+      write(*,*) wynr(imbin,ia)
+c      wynr(imbin,ia) = Ytheor(imbin,l,m)
+      enddo
+      enddo
+      enddo
+
+c     To include f0 decomment next line 
+c     eliminate f0 
+      goto 333 
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      imbin=55
+      ss = xmid(imbin)**2
+      call plotwave(ss,l,m,wynrl(ia))
+c      wynrl(ia) = Ytheor(imbin,l,m)
+      enddo
+      enddo
+
+
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      imbin=61
+      ss = xmid(imbin)**2
+      call plotwave(ss,l,m,wynru(ia))
+c      wynru(ia) = Ytheor(imbin,l,m)
+      enddo
+      enddo
+
+
+      ia=0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      do imbin=55,61
+      ss = xmid(imbin)**2
+      wynr(imbin,ia) = wynrl(ia)*(61-imbin)/dble(61-55)
+     $               + wynru(ia)*(55-imbin)/dble(55-61)
+      enddo 
+      enddo
+      enddo
+
+
+333     continue 
+
+
+
+      return
+      end 
+      
+
+      function cross_pwa(eg,t,xm2p,tgj,epsf) 
+      implicit double precision (a-h,o-z)
+      double complex Y
+
+      common /mbin/ xmmin(200),xmmax(200),xmid(200)
+c      dimension wynr(300,300),errr(300,300)
+      common /wave/ wynr(300,300),errr(300,300)
+      common /bin/ ie,it,mass,lmax,itot
+      common /parameters/ param(348)
+      common /parerrors/ err(348)
+      common /ener/ emin,emax
+
+
+
+
+      pi = 4.d0*datan(1.d0)
+
+
+      xmn = 0.93827
+      xmp = 0.13857
+
+c      ia=0
+c      do l=0,lmax
+c      do m=0,l
+c      ia = ia + 1
+c      do imbin=1,mass
+c      ss = xmid(imbin)**2
+c      call plotwave(ss,wynr(imbin,ia))
+c      enddo
+c      enddo
+c      enddo
+
+      if (xm2p.lt.xmmin(1)) then
+      imbin =1
+      endif 
+      do i=1,mass
+      if ((xm2p.gt.xmmin(i)).and.(xm2p.le.xmmax(i))) then
+      imbin = i
+      endif 
+      enddo 
+      if (xm2p.gt.xmmax(mass)) then
+      imbin = mass
+      endif 
+
+c     add delta 
+c      xmn = 0.93827
+c      xmp = 0.13857
+c      gdel = 0.15
+c      xmd = 1.2
+c      s = xmn**2 + 2.*xmn*eg
+c      ep = xm2p/2.
+c      q = dsqrt(ep**2 - xmp**2)
+c      en = (s - xm2p**2 - xmn**2)/(2.*xm2p)
+c      p = dsqrt(en**2 - xmn**2)
+c      xm13 = dsqrt(xmp**2 + xmn**2 + 2.*ep*en + 2.*p*q*tgj)
+c      xm23 = dsqrt(xmp**2 + xmn**2 + 2.*ep*en - 2.*p*q*tgj)
+c      delprop2 = (gdel*xmd)**2/( (xm13**2 - xmd**2)**2 + (gdel*xmd)**2 )
+c      xscale = wynr(40,1)
+c       sum13 = xscale*delprop2
+
+      sum13 = 0.d0
+
+
+      ia = 0
+      do l=0,lmax
+      do m=0,l
+      ia = ia + 1
+      if (m.eq.0) then
+      eps = 1.
+      else
+      eps = 1./2.
+      endif
+      sum13 = sum13 +
+     $    dsqrt(4.*pi)
+     $ *dble((       Y(l, m,tgj,epsf)
+     $     + dconjg(Y(l, m,tgj,epsf)) )/2. )
+     $  *(wynr(imbin,ia)/eps) 
+      enddo
+      enddo
+
+
+c----------------
+
+
+      cross_pwa = sum13 
+
+      return
+      end 
+
+
+      subroutine plotwave(ss,linp,minp,Ytheor)
+      implicit double precision (a-h,o-z)
+      common /ener/ emin,emax
+      double complex xr,xi
+      double complex S(4),Pp(4),P0(4),Pm(4),D0(4),Dm(4),Dp(4)
+      double complex F0(4),Fm(4),Fp(4)
+
+
+      double complex det,dpluss,dminuss
+      double complex dinv(2,2),xid(2,2),smat(2,2)
+      dimension xm(2),q(2),p(2),r(2)
+
+      double complex xsub0deckpipi,xsub0deckkk,xsub0pipi,xsub0kk,
+     $ xsubi2deck
+     $ ,xsubi2,xsubpdeck,xsubp,xsubf2deck,xsubf2,xsubf2i2deck,xsub3deck
+
+      double complex dminusi2new,dplusi2new,dminuspnew,dplusppnew
+     $ ,dminusf2jonew,dplusf2jonew,tmats
+
+c      double complex ampl(4,6,4)
+      double complex ampl(20,25,4) 
+      double complex ppp(2,3),fff(2,3),ddd(2,3),sss(2)
+      common /parameters/ param(348)
+      common /nof0/ pkk
+      common /transf/ xm2p,eg
+
+       common /wfw/ iwf
+       common /wfave/ ll,mm
+       external deltafun
+       logical tt 
+       dimension anw(2)
+
+      pkk = 1. 
+      xm2p = dsqrt(ss) 
+
+c      xmk = 0.4957
+c      emink = 2.*xmk - 0.04
+c      emaxk = 2.*xmk + 0.04
+c      if ((dsqrt(ss).ge.emink).and.(dsqrt(ss).le.emaxk)) then
+c      pkk = 0.
+c      endif
+
+ 
+      pi = 4.d0*datan(1.d0)
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      xmn = 0.93827
+c      xmp = 0.13857
+      xmp = 0.134
+      eg = (emin+emax)/2. 
+      px = dsqrt(ss/4. - xmp**2)
+c     conversion between AS normalization of data and LL
+c      conv = 1./1000.
+      conv = 1.
+      phase=conv*(1./2.)*0.38938*px/(2.*(2.*pi)**3*64.*pi*xmn**2*eg**2)
+
+c-----
+
+
+      det = Dpluss(ss,1,1)*Dpluss(ss,2,2)
+     $     -Dpluss(ss,1,2)*Dpluss(ss,2,1)
+      dinv(1,1) =  Dpluss(ss,2,2)/det
+      dinv(1,2) = -Dpluss(ss,1,2)/det
+      dinv(2,1) = -Dpluss(ss,2,1)/det
+      dinv(2,2) =  Dpluss(ss,1,1)/det
+
+      xmk = 0.4957
+
+      xm(1) = xmp
+      xm(2) = xmk
+      xmu = 0.77
+      asl = -1.722208439
+      do i=1,2   
+      q(i) = dsqrt(ss/4. - xm(i)**2)
+c      sigma = dsqrt(1. - 4.*xm(i)**2/s)
+      p(i) = -(gon(ss/xm(i)**2,asl,xmu/xm(i))
+     $     - gon(xmu**2/xm(i)**2,asl,xmu/xm(i)) )
+      r(i) = q(i)/(8.*pi*dsqrt(ss))
+      enddo
+
+      do i=1,2
+      do j=1,2
+      if (i.eq.j) then
+      xid(i,j) = xr
+      else
+      xid(i,j) = (0.d0,0.d0)
+      endif 
+      smat(i,j) = (0.d0,0.d0)
+      do k=1,2
+      smat(i,j) = smat(i,j) + dinv(i,k)*Dminuss(ss,k,j)
+      enddo
+      enddo
+      enddo 
+
+c----------------(0,0)
+
+      xsub0deckpipi = (1./dsqrt(3.d0))*dinv(1,1)
+      xsub0deckkk = (1./dsqrt(3.d0))*dinv(1,2)*pkk
+
+
+      xsub0pipi =  (1./dsqrt(3.d0))
+     $ *( (1./2.)*(xr + smat(1,1))
+     $             + xi*(1./2.)*(xr - smat(1,1))*p(1)/r(1) )
+
+      xsub0kk = (1./dsqrt(3.d0))
+     $ *( (1./2.)*smat(1,2)
+c     $             - xi*(1./2.)*smat(1,2)*p(2)/r(2) 
+     $  - tmatS(ss,1,2)*p(2) )*pkk
+
+c-------------------(0,2) 
+
+      xsubi2deck = (1./dsqrt(6.d0))/dplusi2new(ss)
+
+
+      xsubi2 = (1./dsqrt(6.d0))*
+     $  ( (1./2.)*(xr + dminusi2new(ss)/dplusi2new(ss))
+     $   + xi*(1./2.)*(xr - dminusi2new(ss)/dplusi2new(ss))*p(1)/r(1))
+
+
+c------------------------(1,1)----------
+
+      xsubpdeck = (1./dsqrt(2.d0))/dplusppnew(ss)
+
+
+      xsubp = (1./dsqrt(2.d0))*dsqrt(1.-4.*xmp**2/ss)*
+     $   ( (1./2.)*(xr + dminuspnew(ss)/dplusppnew(ss))
+     $  + xi*(1./2.)*(xr - dminuspnew(ss)/dplusppnew(ss))*p(1)/r(1) ) 
+
+c-------------------------(2,0)------------------
+
+      xsubf2deck=  (1./dsqrt(3.d0))/dplusf2jonew(ss)
+
+      xsubf2 = (1./dsqrt(3.d0))*(1.-4.*xmp**2/ss)*
+     $  ( (1./2.)*(xr+dminusf2jonew(ss)/dplusf2jonew(ss) )
+     $ + xi*(1./2.)*(xr-dminusf2jonew(ss)/dplusf2jonew(ss))*p(1)/r(1) )
+
+c-------------------------(2,2) -------------
+
+      xsubf2i2deck = (1./dsqrt(6.d0))*(1.-4.*xmp**2/ss)
+
+c-------------------------(3,1) ----
+
+      xsub3deck =  (1./dsqrt(2.d0))*dsqrt(1.-4.*xmp**2/ss)**3
+
+c----
+
+      it = 0
+      do i=1,2
+      do m=1,3
+      ppp(i,m) = 
+     $  (  param(1+it)*xr + param(2+it)*xi 
+     $  + (param(3+it)*xr + param(4+it)*xi)*ss
+     $  + (param(5+it)*xr + param(6+it)*xi)*ss**2 
+     $  + (param(7+it)*xr + param(8+it)*xi)*ss**3
+     $  + (param(9+it)*xr + param(10+it)*xi)*ss**4
+     $   )*xsubpdeck
+     $  + (param(11+it)*xr + param(12+it)*xi
+     $  + (param(13+it)*xr + param(14+it)*xi)*ss
+     $  + (param(15+it)*xr + param(16+it)*xi)*ss**2)*xsubp
+      it = it + 16
+      enddo
+      enddo 
+      pp(1) = ppp(1,1)
+      pp(2) = ppp(2,1)
+      pp(3) = (0.d0,0.d0)
+      pp(4) = (0.d0,0.d0)
+ 
+      p0(1) = ppp(1,3)
+      p0(2) = ppp(2,3)
+      p0(3) = (0.d0,0.d0)
+      p0(4) = (0.d0,0.d0)
+
+      pm(1) = ppp(1,2)
+      pm(2) = ppp(2,2)
+      pm(3) = (0.d0,0.d0)
+      pm(4) = (0.d0,0.d0) 
+   
+
+      do i=1,2
+
+      sss(i) = 
+     $ (
+     $  (param(it+1)*xr + param(it+2)*xi)
+     $ +(param(it+3)*xr + param(it+4)*xi)*ss
+     $ +(param(it+5)*xr + param(it+6)*xi)*ss**2
+     $ +(param(it+7)*xr + param(it+8)*xi)*ss**3
+     $ )*xsub0deckpipi
+
+     $ + ( (param(it+9)*xr + param(it+10)*xi)
+     $ +(param(it+11)*xr + param(it+12)*xi)*ss
+     $ +(param(it+13)*xr + param(it+14)*xi)*ss**2
+     $ +(param(it+15)*xr + param(it+16)*xi)*ss**3
+     $ )*xsub0deckkk
+
+
+     $    + (param(it+17)*xr + param(it+18)*xi
+     $    + (param(it+19)*xr + param(it+20)*xi)*ss
+     $    + (param(it+21)*xr + param(it+22)*xi)*ss**2)*xsub0pipi
+     $    + (param(it+23)*xr + param(it+24)*xi
+     $    + (param(it+25)*xr + param(it+26)*xi)*ss
+     $    + (param(it+27)*xr + param(it+28)*xi)*ss**2)*xsub0kk
+
+
+     $    + (param(it+29)*xr + param(it+30)*xi
+     $    + (param(it+31)*xr + param(it+32)*xi)*ss
+     $    + (param(it+33)*xr + param(it+34)*xi)*ss**2
+     $    + (param(it+35)*xr + param(it+36)*xi)*ss**3
+     $     )*xsubi2deck
+
+     $    + (param(it+37)*xr + param(it+38)*xi
+     $    + (param(it+39)*xr + param(it+40)*xi)*ss
+     $    + (param(it+41)*xr + param(it+42)*xi)*ss**2
+     $     )*xsubi2
+
+
+
+      it = it + 42
+      enddo
+      s(1) = sss(1)
+      s(2) = sss(2)
+      s(3) = (0.d0,0.d0)
+      s(4) = (0.d0,0.d0)
+
+
+c------------------------------------------------------
+      do i=1,2
+      do m=1,3
+      ddd(i,m) = ( 
+     $  (param(it+1)*xr + param(it+2)*xi) 
+     $ +(param(it+3)*xr + param(it+4)*xi)*ss
+     $ +(param(it+5)*xr + param(it+6)*xi)*ss**2
+     $ +(param(it+7)*xr + param(it+8)*xi)*ss**3
+     $ +(param(it+9)*xr + param(it+10)*xi)*ss**4
+     $ )*xsubf2deck
+     $         + (
+     $  (param(it+11)*xr + param(it+12)*xi) 
+     $ +(param(it+13)*xr + param(it+14)*xi)*ss
+     $ +(param(it+15)*xr + param(it+16)*xi)*ss**2
+     $ )*xsubf2i2deck
+     $ + (param(it+17)*xr + param(it+18)*xi
+     $ + (param(it+19)*xr + param(it+20)*xi)*ss
+     $ + (param(it+21)*xr + param(it+22)*xi)*ss**2)*xsubf2
+      it = it + 22
+      enddo
+      enddo 
+      dp(1) = ddd(1,1)
+      dp(2) = ddd(2,1)
+      dp(3) = (0.d0,0.d0)
+      dp(4) = (0.d0,0.d0)
+      dm(1) = ddd(1,2) 
+      dm(2) = ddd(2,2)
+      dm(3) = (0.d0,0.d0)
+      dm(4) = (0.d0,0.d0)
+      d0(1) = ddd(1,3)
+      d0(2) = ddd(2,3)
+      d0(3) = (0.d0,0.d0)
+      d0(4) = (0.d0,0.d0) 
+
+ 
+
+c-------------------------(2,2) -------------
+      do i=1,2
+      do m=1,3
+      fff(i,m) = (
+     $   (param(it+1)*xr + param(it+2)*xi)
+     $  +(param(it+3)*xr + param(it+4)*xi)*ss
+     $  +(param(it+5)*xr + param(it+6)*xi)*ss**2 
+     $ )*xsub3deck
+      it = it + 6
+      enddo
+      enddo 
+      fp(1) = fff(1,1)
+      fp(2) = fff(2,1)
+      fp(3) = (0.d0,0.d0)
+      fp(4) = (0.d0,0.d0)
+      fm(1) = fff(1,2)
+      fm(2) = fff(2,2)
+      fm(3) = (0.d0,0.d0)
+      fm(4) = (0.d0,0.d0)
+      f0(1) = fff(1,3)
+      f0(2) = fff(2,3)
+      f0(3) = (0.d0,0.d0)
+      f0(4) = (0.d0,0.d0)
+
+      do ll=0,20
+      if (ll.eq.0) then
+      mmm3 = 0
+      else
+      mmm3 = 1
+      endif 
+      do mm=-mmm3,mmm3
+      do is=1,4
+      ampl(ll+1,mm+ll+1,is)  = (0.d0,0.d0)
+      enddo
+      enddo
+      enddo 
+
+
+      do i=1,4
+      ampl(0+1, 0+0+1,i) = S(i)
+      ampl(1+1,-1+1+1,i) = Pm(i)
+      ampl(1+1, 0+1+1,i) = P0(i)
+      ampl(1+1,+1+1+1,i) = Pp(i)
+      ampl(2+1,-1+2+1,i) = Dm(i)
+      ampl(2+1, 0+2+1,i) = D0(i)
+      ampl(2+1,+1+2+1,i) = Dp(i)
+      ampl(3+1,-1+3+1,i) = Fm(i)
+      ampl(3+1, 0+3+1,i) = F0(i)
+      ampl(3+1,+1+3+1,i) = Fp(i)
+      enddo 
+
+
+
+c      add delta 
+
+       do ll=0,10
+       if (ll.eq.0) then
+       mff = 0 
+       else
+       mff = 1
+       endif 
+       do mm=-mff,mff
+       do iwf=1,2
+       max = 10
+       dokl = 0.01
+       call fdai(deltafun,-1.d0,1.d0,0.d0,2.*pi,max,dokl,anw(iwf),tt)
+       enddo
+       do is=1,4
+       if (is.le.2) then
+       ampl(ll+1,mm+ll+1,is) = anw(1)*xr + anw(2)*xi 
+     $ + ampl(ll+1,mm+ll+1,is)
+       endif
+       enddo
+       enddo
+       enddo 
+
+
+
+c      l = 0
+c      m = 0 
+
+
+      Ytheor = 0.d0 
+      do l1=0,10
+      if (l1.eq.0) then
+      m1min = 0
+      m1max = 0
+      else  
+      m1min = -1   
+      m1max =  1
+      endif
+      do m1=m1min,m1max
+      do l2=0,10
+      if (l2.eq.0) then
+      m2min = 0
+      m2max = 0
+      else
+      m2min = -1
+      m2max =  1
+      endif
+      do m2=m2min,m2max
+      call cg(l1,m1,l2,-m2,linp,-minp,wyn1)
+      call cg(l1,m1,l2,-m2,linp, minp,wyn3)
+      call cg(l1,0,l2,0,linp,0,wyn2)
+      wsp = (-1)**m1*(1./2.)*(wyn1+wyn3*(-1.)**minp)*wyn2
+     $ *dsqrt(dble((2*l1+1)*(2*l2+1))/dble(2*linp+1))
+      do i=1,2
+      Ytheor = Ytheor 
+     $+dble(phase*wsp*ampl(l1+1,m1+l1+1,i)*dconjg(ampl(l2+1,m2+l2+1,i)))
+      enddo 
+      enddo
+      enddo
+      enddo
+      enddo
+      
+c     2 from two helicity amplitudes not four 
+      Ytheor = 2.*Ytheor 
+       return
+       end 
+
+
+       function deltafun(tgj,epsf)
+       implicit double precision (a-h,o-z)
+       double complex Y
+       common /wfw/ iwf
+       common /wfave/ ll,mm
+       common /transf/ xm2p,eg
+       double complex delprop,xr,xi
+       xr = (1.d0,0.d0)
+       xi = (0.d0,1.d0)
+
+      xmn = 0.93827
+      xmp = 0.13857
+      gdel = 0.15
+      xmd = 1.2
+      s = xmn**2 + 2.*xmn*eg
+      ep = xm2p/2.
+      q = dsqrt(ep**2 - xmp**2)
+      en = (s - xm2p**2 - xmn**2)/(2.*xm2p)
+      p = dsqrt(en**2 - xmn**2)
+      xm13 = dsqrt(xmp**2 + xmn**2 + 2.*ep*en + 2.*p*q*tgj)
+      xm23 = dsqrt(xmp**2 + xmn**2 + 2.*ep*en - 2.*p*q*tgj)
+      delprop = (gdel*xmd)/( (xm13**2 - xmd**2)*xr + (gdel*xmd)*xi )
+      if (iwf.eq.1) then
+      deltafun = dble(Y(ll,mm,tgj,epsf)*delprop)
+      else
+      deltafun = dimag(Y(ll,mm,tgj,epsf)*delprop)
+      endif
+      deltafun = deltafun*10.
+      return
+      end
+
+
+
+c----------------------------------
+
+      function Ytheor(imbin,l,m)
+      implicit double precision (a-h,o-z)
+      common /bin/ ie,it0,mass,lmax,itot
+      common /massbin/ xmid(200)
+      common /ener/ emin,emax
+      common /mass/ xmp,xmn
+      double complex xr,xi
+      double complex S(4),Pp(4),P0(4),Pm(4),D0(4),Dm(4),Dp(4)
+      double complex F0(4),Fm(4),Fp(4)
+      double complex ampl(4,6,4)
+
+      pi = 4.d0*datan(1.d0)
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      xmn = 0.93827
+c      xmp = 0.13857
+      xmp = 0.134
+      eg = (emin+emax)/2.
+      xm = xmid(imbin)
+
+      p = dsqrt(xm**2/4. - xmp**2)
+c     conversion between AS normalization of data and LL
+c      conv = 1./1000.
+      conv = 1.
+      phase=conv*(1./2.)*0.38938*p/(2.*(2.*pi)**3*64.*pi*xmn**2*eg**2)
+
+      call Pplus(imbin,Pp,P0,Pm,S,Dp,D0,Dm,F0,Fm,Fp)
+      do i=1,4
+      ampl(0+1, 0+0+1,i) = S(i)
+      ampl(1+1,-1+1+1,i) = Pm(i)
+      ampl(1+1, 0+1+1,i) = P0(i)
+      ampl(1+1,+1+1+1,i) = Pp(i)
+      ampl(2+1,-1+2+1,i) = Dm(i)
+      ampl(2+1, 0+2+1,i) = D0(i)
+      ampl(2+1,+1+2+1,i) = Dp(i)
+      ampl(3+1,-1+3+1,i) = Fm(i)
+      ampl(3+1, 0+3+1,i) = F0(i)
+      ampl(3+1,+1+3+1,i) = Fp(i)
+      enddo
+
+      Ytheor = 0.d0
+      do l1=0,3
+      if (l1.eq.0) then
+      m1min = 0
+      m1max = 0
+      else
+      m1min = -1
+      m1max =  1
+      endif
+      do m1=m1min,m1max
+      do l2=0,3
+      if (l2.eq.0) then
+      m2min = 0
+      m2max = 0
+      else
+      m2min = -1
+      m2max =  1
+      endif
+      do m2=m2min,m2max
+      call cg(l1,m1,l2,-m2,l,-m,wyn1)
+      call cg(l1,m1,l2,-m2,l, m,wyn3)
+      call cg(l1,0,l2,0,l,0,wyn2)
+      wsp = (-1)**m1*(1./2.)*(wyn1+wyn3*(-1.)**m)*wyn2
+     $ *dsqrt(dble((2*l1+1)*(2*l2+1))/dble(2*l+1))
+      do i=1,2
+      Ytheor = Ytheor
+     $+dble(phase*wsp*ampl(l1+1,m1+l1+1,i)*dconjg(ampl(l2+1,m2+l2+1,i)))
+      enddo
+      enddo
+      enddo
+      enddo
+      enddo
+
+c     2 from two helicity amplitudes not four 
+      Ytheor = 2.*Ytheor
+
+      return
+      end 
+
+
+      subroutine  Pplus(imbin,Pp,P0,Pm,S,Dp,D0,Dm,F0,Fm,Fp)
+      implicit double precision (a-h,o-z)
+      common /parameters/ param(348)
+      common /massbin/ xmid(200)
+      double complex xr,xi
+      double complex Pp(4),P0(4),Pm(4),S(4),Dp(4),D0(4),Dm(4)
+      double complex F0(4),Fm(4),Fp(4)
+      common /mass/ xmp,xmn
+
+      double complex sub0deckpipi,sub0deckkk,sub0pipi,sub0kk,subi2deck
+     $ ,subi2,subpdeck,subp,subf2deck,subf2,subf2i2deck,sub3deck
+       common /theoralpl/ sub0deckpipi(200),sub0deckkk(200),
+     $ sub0pipi(200)
+     $ ,sub0kk(200),
+     $ subi2deck(200),subi2(200),subpdeck(200),subp(200),subf2deck(200)
+     $ ,subf2(200),subf2i2deck(200),sub3deck(200)
+
+
+      double complex ppp(2,3),fff(2,3),ddd(2,3),sss(2)
+
+
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+
+      ss = xmid(imbin)**2
+
+      it = 0
+      do i=1,2
+      do m=1,3
+      ppp(i,m) =
+     $  (  param(1+it)*xr + param(2+it)*xi
+     $  + (param(3+it)*xr + param(4+it)*xi)*ss
+     $  + (param(5+it)*xr + param(6+it)*xi)*ss**2
+     $  + (param(7+it)*xr + param(8+it)*xi)*ss**3
+     $  + (param(9+it)*xr + param(10+it)*xi)*ss**4
+     $   )*subpdeck(imbin)
+     $  + (param(11+it)*xr + param(12+it)*xi
+     $  + (param(13+it)*xr + param(14+it)*xi)*ss
+     $  + (param(15+it)*xr + param(16+it)*xi)*ss**2)*subp(imbin)
+      it = it + 16
+      enddo
+      enddo
+      pp(1) = ppp(1,1)
+      pp(2) = ppp(2,1)
+      pp(3) = (0.d0,0.d0)
+      pp(4) = (0.d0,0.d0)
+
+
+c      p0 pm should be exchnaged  
+      p0(1) = ppp(1,3)
+      p0(2) = ppp(2,3)
+      p0(3) = (0.d0,0.d0)
+      p0(4) = (0.d0,0.d0)
+
+      pm(1) = ppp(1,2)
+      pm(2) = ppp(2,2)
+      pm(3) = (0.d0,0.d0)
+      pm(4) = (0.d0,0.d0)
+
+
+      do i=1,2
+
+      sss(i) =
+     $ (
+     $  (param(it+1)*xr + param(it+2)*xi)
+     $ +(param(it+3)*xr + param(it+4)*xi)*ss
+     $ +(param(it+5)*xr + param(it+6)*xi)*ss**2
+     $ +(param(it+7)*xr + param(it+8)*xi)*ss**3
+     $ )*sub0deckpipi(imbin)
+
+     $ + ( (param(it+9)*xr + param(it+10)*xi)
+     $ +(param(it+11)*xr + param(it+12)*xi)*ss
+     $ +(param(it+13)*xr + param(it+14)*xi)*ss**2
+     $ +(param(it+15)*xr + param(it+16)*xi)*ss**3
+     $ )*sub0deckkk(imbin)
+
+
+     $    + (param(it+17)*xr + param(it+18)*xi
+     $    + (param(it+19)*xr + param(it+20)*xi)*ss
+     $    + (param(it+21)*xr + param(it+22)*xi)*ss**2)*sub0pipi(imbin)
+     $    + (param(it+23)*xr + param(it+24)*xi
+     $    + (param(it+25)*xr + param(it+26)*xi)*ss
+     $    + (param(it+27)*xr + param(it+28)*xi)*ss**2)*sub0kk(imbin)
+
+     $    + (param(it+29)*xr + param(it+30)*xi
+     $    + (param(it+31)*xr + param(it+32)*xi)*ss
+     $    + (param(it+33)*xr + param(it+34)*xi)*ss**2
+     $    + (param(it+35)*xr + param(it+36)*xi)*ss**3
+     $     )*subi2deck(imbin)
+
+     $    + (param(it+37)*xr + param(it+38)*xi
+     $    + (param(it+39)*xr + param(it+40)*xi)*ss
+     $    + (param(it+41)*xr + param(it+42)*xi)*ss**2
+     $     )*subi2(imbin)
+
+      it = it + 42
+      enddo
+      s(1) = sss(1)
+      s(2) = sss(2)
+      s(3) = (0.d0,0.d0)
+      s(4) = (0.d0,0.d0)
+
+
+c------------------------------------------------------
+      do i=1,2
+      do m=1,3
+      ddd(i,m) = (
+     $  (param(it+1)*xr + param(it+2)*xi)
+     $ +(param(it+3)*xr + param(it+4)*xi)*ss
+     $ +(param(it+5)*xr + param(it+6)*xi)*ss**2
+     $ +(param(it+7)*xr + param(it+8)*xi)*ss**3
+     $ +(param(it+9)*xr + param(it+10)*xi)*ss**4
+     $ )*subf2deck(imbin)
+     $         + (
+     $  (param(it+11)*xr + param(it+12)*xi)
+     $ +(param(it+13)*xr + param(it+14)*xi)*ss
+     $ +(param(it+15)*xr + param(it+16)*xi)*ss**2
+     $ )*subf2i2deck(imbin)
+     $ + (param(it+17)*xr + param(it+18)*xi
+     $ + (param(it+19)*xr + param(it+20)*xi)*ss
+     $ + (param(it+21)*xr + param(it+22)*xi)*ss**2)*subf2(imbin)
+      it = it + 22
+      enddo
+      enddo
+      dp(1) = ddd(1,1)
+      dp(2) = ddd(2,1)
+      dp(3) = (0.d0,0.d0)
+      dp(4) = (0.d0,0.d0)
+      dm(1) = ddd(1,2)
+      dm(2) = ddd(2,2)
+      dm(3) = (0.d0,0.d0)
+      dm(4) = (0.d0,0.d0)
+      d0(1) = ddd(1,3)
+      d0(2) = ddd(2,3)
+      d0(3) = (0.d0,0.d0)
+      d0(4) = (0.d0,0.d0)
+
+
+c-------------------------(2,2) -------------
+      do i=1,2
+      do m=1,3
+      fff(i,m) = (
+     $   (param(it+1)*xr + param(it+2)*xi)
+     $  +(param(it+3)*xr + param(it+4)*xi)*ss
+     $  +(param(it+5)*xr + param(it+6)*xi)*ss**2
+     $ )*sub3deck(imbin)
+      it = it + 6
+      enddo
+      enddo
+      fp(1) = fff(1,1)
+      fp(2) = fff(2,1)
+      fp(3) = (0.d0,0.d0)
+      fp(4) = (0.d0,0.d0)
+      fm(1) = fff(1,2)
+      fm(2) = fff(2,2)
+      fm(3) = (0.d0,0.d0)
+      fm(4) = (0.d0,0.d0)
+      f0(1) = fff(1,3)
+      f0(2) = fff(2,3)
+      f0(3) = (0.d0,0.d0)
+      f0(4) = (0.d0,0.d0)
+
+      return
+      end
+
+
+      subroutine init0
+      implicit double precision (a-h,o-z)
+      common /bin/ ie,it,mass,lmax,itot
+      common /mass/ xmp,xmn
+      common /massbin/ xmid(200)
+
+c-----------------
+      double complex xr,xi
+      double complex det,dpluss,dminuss
+      double complex dinv(2,2),xid(2,2),smat(2,2)
+      dimension xm(2),q(2),p(2),r(2)
+      double complex sub0deckpipi,sub0deckkk,sub0pipi,sub0kk,subi2deck
+     $ ,subi2,subpdeck,subp,subf2deck,subf2,subf2i2deck,sub3deck
+
+       common /theoralpl/ sub0deckpipi(200),sub0deckkk(200),
+     $  sub0pipi(200),sub0kk(200),subi2deck(200),subi2(200),
+     $ subpdeck(200),subp(200),subf2deck(200),subf2(200),
+     $ subf2i2deck(200),sub3deck(200)
+
+      double complex dminusi2new,dplusi2new,dminuspnew,dplusppnew
+     $ ,dminusf2jonew,dplusf2jonew,tmats
+c----------------
+
+
+      pi = 4.d0*datan(1.d0)
+
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+
+      do imbin=1,mass
+      xmmin = dble(imbin-1)*0.010 + 0.400
+      xmmax = dble(imbin  )*0.010 + 0.400
+      xmid(imbin) = (xmmin+xmmax)/2.
+      enddo
+c      xmp = 0.13957
+       xmp = 0.134
+      xmn = 0.93827
+
+      do imbin=1,mass
+      s = xmid(imbin)**2
+      det = Dpluss(s,1,1)*Dpluss(s,2,2)
+     $     -Dpluss(s,1,2)*Dpluss(s,2,1)
+      dinv(1,1) =  Dpluss(s,2,2)/det
+      dinv(1,2) = -Dpluss(s,1,2)/det
+      dinv(2,1) = -Dpluss(s,2,1)/det
+      dinv(2,2) =  Dpluss(s,1,1)/det
+
+      xmk = 0.4957
+
+      xm(1) = xmp
+      xm(2) = xmk
+      xmu = 0.77
+      asl = -1.722208439
+      do i=1,2
+      q(i) = dsqrt(s/4. - xm(i)**2)
+c      sigma = dsqrt(1. - 4.*xm(i)**2/s)
+      p(i) = -(gon(s/xm(i)**2,asl,xmu/xm(i))
+     $     - gon(xmu**2/xm(i)**2,asl,xmu/xm(i)) )
+      r(i) = q(i)/(8.*pi*dsqrt(s))
+      enddo
+
+      do i=1,2
+      do j=1,2
+      if (i.eq.j) then
+      xid(i,j) = xr
+      else
+      xid(i,j) = (0.d0,0.d0)
+      endif
+      smat(i,j) = (0.d0,0.d0)
+      do k=1,2
+      smat(i,j) = smat(i,j) + dinv(i,k)*Dminuss(s,k,j)
+      enddo
+      enddo
+      enddo
+
+
+c----------------(0,0)
+
+      sub0deckpipi(imbin) = (1./dsqrt(3.d0))*dinv(1,1)
+      sub0deckkk(imbin) = (1./dsqrt(3.d0))*dinv(1,2)
+
+      sub0pipi(imbin) =  (1./dsqrt(3.d0))
+     $ *( (1./2.)*(xr + smat(1,1))
+     $             + xi*(1./2.)*(xr - smat(1,1))*p(1)/r(1) )
+
+      sub0kk(imbin) = (1./dsqrt(3.d0))
+     $ *( (1./2.)*smat(1,2)
+c     $             - xi*(1./2.)*smat(1,2)*p(2)/r(2) 
+     $  - tmatS(s,1,2)*p(2) )
+
+c-------------------(0,2) 
+
+      subi2deck(imbin) = (1./dsqrt(6.d0))/dplusi2new(s)
+
+      subi2(imbin) = (1./dsqrt(6.d0))*
+     $  ( (1./2.)*(xr + dminusi2new(s)/dplusi2new(s))
+     $   + xi*(1./2.)*(xr - dminusi2new(s)/dplusi2new(s))*p(1)/r(1))
+
+c------------------------(1,1)----------
+
+      subpdeck(imbin) = (1./dsqrt(2.d0))/dplusppnew(s)
+
+      subp(imbin) = (1./dsqrt(2.d0))*dsqrt(1.-4.*xmp**2/s)*
+     $   ( (1./2.)*(xr + dminuspnew(s)/dplusppnew(s))
+     $  + xi*(1./2.)*(xr - dminuspnew(s)/dplusppnew(s))*p(1)/r(1) )
+
+c-------------------------(2,0)------------------
+
+      subf2deck(imbin)=  (1./dsqrt(3.d0))/dplusf2jonew(s)
+
+      subf2(imbin) = (1./dsqrt(3.d0))*(1.-4.*xmp**2/s)*
+     $  ( (1./2.)*(xr+dminusf2jonew(s)/dplusf2jonew(s) )
+     $ + xi*(1./2.)*(xr-dminusf2jonew(s)/dplusf2jonew(s))*p(1)/r(1) )
+
+c-------------------------(2,2) -------------
+
+      subf2i2deck(imbin) = (1./dsqrt(6.d0))*(1.-4.*xmp**2/s)
+
+c-------------------------(3,1) ----
+
+      sub3deck(imbin) =  (1./dsqrt(2.d0))*dsqrt(1.-4.*xmp**2/s)**3
+
+      enddo
+
+      return
+      end 
+
+
+c---------------------------------
+
+      double complex function Dplusi2new(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      xmk = 0.4957
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+      sigma = dsqrt(1. - 4.*xmp**2/s)
+      xmu = 0.77
+      sig0 = dsqrt(1. - 4.*xmp**2/xmu**2)
+      a0 = -0.079293538  
+      b0 = 2.20799549 
+      aa = -2.37230835  
+      bb = 66.0589284
+      t = aa + bb*s 
+      Dplusi2new = xr + a0 + b0*s 
+     $ +t*( -sigma*dlog((sigma+1)/(1.-sigma))/(4.*pi)**2
+     $            +sig0*dlog((sig0+1)/(1.-sig0))/(4.*pi)**2)
+     $      + t*xi*r
+      return
+      end
+
+      double complex function Dminusi2new(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      xmk = 0.4957
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+      sigma = dsqrt(1. - 4.*xmp**2/s)
+      xmu = 0.77
+      sig0 = dsqrt(1. - 4.*xmp**2/xmu**2)
+      a0 = -0.079293538  
+      b0 = 2.20799549 
+      aa = -2.37230835  
+      bb = 66.0589284
+      t = aa + bb*s 
+      Dminusi2new = xr + a0 + b0*s 
+     $ +t*( -sigma*dlog((sigma+1)/(1.-sigma))/(4.*pi)**2
+     $            +sig0*dlog((sig0+1)/(1.-sig0))/(4.*pi)**2)
+     $      - t*xi*r
+      return
+      end
+
+
+
+c----------------------------------------   
+
+      double complex function dplusppnew(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      sigma = dsqrt(1. - 4*xmp**2/s)
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+
+      xmu = .77 
+      sig0 = dsqrt(1. - 4.*xmp**2/xmu**2)
+      gon = sig0*dlog((1+sig0)/(1.-sig0))
+
+      a0 = 1. 
+      b0 = -1.67880555 
+      c0 = -0.00178847832
+
+      t0 = 1.57167512 
+      t1 = -22.2035108  
+      t2 = 4.47205165
+
+      tr = t0 + t1*s + t2*s**2 
+
+      dplusppnew = a0 + b0*s + c0*s**2 
+     $   -tr*(sigma*dlog((1+sigma)/(1.-sigma)) - gon)/(4.*pi)**2
+     $   +tr*xi*r 
+
+
+      return
+      end
+
+
+
+
+      double complex function dminuspnew(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      sigma = dsqrt(1. - 4*xmp**2/s)
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+
+      xmu = .77 
+      sig0 = dsqrt(1. - 4.*xmp**2/xmu**2)
+      gon = sig0*dlog((1+sig0)/(1.-sig0))
+
+      a0 = 1. 
+      b0 = -1.67880555 
+      c0 = -0.00178847832
+
+      t0 = 1.57167512 
+      t1 = -22.2035108  
+      t2 = 4.47205165
+
+      tr = t0 + t1*s + t2*s**2 
+
+      dminuspnew = a0 + b0*s + c0*s**2 
+     $   -tr*(sigma*dlog((1+sigma)/(1.-sigma)) - gon)/(4.*pi)**2
+     $   -tr*xi*r 
+
+
+      return
+      end
+
+c---------------------------------------------
+
+
+      double complex function dplusf2jonew(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+      b10 =  2.00376236
+      c10 = 2.83327093
+      d10 =  -3.60758048
+      e10 = -52.7354936
+      xmu = 0.77
+      xns = e10*(s - 4.*xmp**2)**2
+      si = dsqrt(1. - 4.*xmp**2/s)
+      g =  - si*dlog( (1.+si)/(1.-si) )/(4.*pi**2)
+      si = dsqrt(1. - 4.*xmp**2/xmu**2)
+      g0 =  - si*dlog( (1.+si)/(1.-si) )/(4.*pi**2)
+      dplusf2jonew =
+     $ xr + b10*s + c10*s**2 + d10*s**3
+     $  + xns*(g - g0)
+     $ + xns*r*xi
+      return
+      end
+
+      double complex function dminusf2jonew(s)
+      implicit double precision (a-h,o-z)
+      double complex xr,xi
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      q = dsqrt(s/4. - xmp**2)
+      r = q/(8.*pi*dsqrt(s))
+      b10 =  2.00376236
+      c10 = 2.83327093
+      d10 =  -3.60758048
+      e10 = -52.7354936
+      xmu = 0.77
+      xns = e10*(s - 4.*xmp**2)**2
+      si = dsqrt(1. - 4.*xmp**2/s)
+      g =  - si*dlog( (1.+si)/(1.-si) )/(4.*pi**2)
+      si = dsqrt(1. - 4.*xmp**2/xmu**2)
+      g0 =  - si*dlog( (1.+si)/(1.-si) )/(4.*pi**2)
+      dminusf2jonew =
+     $ xr + b10*s + c10*s**2 + d10*s**3
+     $  + xns*(g - g0)
+     $ - xns*r*xi
+      return
+      end
+
+c-------------------------------------------
+      double complex function DplusS(s,m,n)
+      implicit double precision (a-h,o-z)
+      common /massoset/ xmu,xmp,xmk,fp,asl
+      dimension q(2),r(2),p(2),t(2,2)
+      double complex d(2,2)
+      double complex xr,xi
+      common /nof0/ pkk
+      dimension xm(2)
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+c      xmp = 0.13957
+      xmk = 0.4957
+      fp = 0.093
+      xmu = .77
+      asl = -1.72208439
+      xm(1) = xmp
+      xm(2) = xmk
+      e = dsqrt(s)
+c      emin = 2.*xmk - 0.04
+c      emax = 2.*xmk + 0.04
+c      if ((e.ge.emin).and.(e.le.emax)) then
+cc      e = emin
+       pkk =1 
+c      endif 
+      do i=1,2
+      if (e.gt.2.*xm(i)) then
+      q(i) = dsqrt(e**2/4. - xm(i)**2)
+      else
+      q(i) = 0.d0
+      endif
+      enddo
+      t(1,1) = -(2.*e**2 - xmp**2)/(2.*fp**2) 
+      t(1,2) = -pkk*dsqrt(3.d0)*e**2/(4.*fp**2)
+      t(2,1) = t(1,2)
+      t(2,2) =  -3.*e**2/(4.*fp**2)
+      do i=1,2   
+      sigma = dsqrt(1. - 4.*xm(i)**2/e**2)
+      p(i) = sigma*dlog((sigma+1)/(1.-sigma))
+      p(i) = gon(e**2/xm(i)**2,asl,xmu/xm(i))
+      r(i) = q(i)/(8.*pi*e)
+      enddo
+      do i=1,2
+      do j=1,2
+      if (i.eq.j) then
+      d(i,j) = xr + t(i,j)*(-p(j)*xr + xi*r(j))
+      else
+      d(i,j) =      t(i,j)*(-p(j)*xr + xi*r(j))
+      endif
+      enddo
+      enddo
+      DplusS = d(m,n)
+      return
+      end
+c-------------------------------------------
+      double complex function DminusS(s,m,n)
+      implicit double precision (a-h,o-z)
+      common /massoset/ xmu,xmp,xmk,fp,asl
+      dimension q(2),r(2),p(2),t(2,2)
+      double complex d(2,2)
+      double complex xr,xi
+      common /nof0/ pkk
+      dimension xm(2)
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+      xmk = 0.4957
+      fp = 0.093
+      xmu = .77
+      asl = -1.72208439
+      xm(1) = xmp
+      xm(2) = xmk
+      e = dsqrt(s) 
+
+c      emin = 2.*xmk - 0.04
+c      emax = 2.*xmk + 0.04
+c      if ((e.ge.emin).and.(e.le.emax)) then
+cc      e = emin
+      pkk = 1.
+c      endif
+
+      do i=1,2
+      if (e.gt.2.*xm(i)) then
+      q(i) = dsqrt(e**2/4. - xm(i)**2)
+      else
+      q(i) = 0.d0
+      endif
+      enddo
+      t(1,1) = -(2.*e**2 - xmp**2)/(2.*fp**2) 
+      t(1,2) = -pkk*dsqrt(3.d0)*e**2/(4.*fp**2)
+      t(2,1) = t(1,2)
+      t(2,2) =  -3.*e**2/(4.*fp**2)
+      do i=1,2   
+      sigma = dsqrt(1. - 4.*xm(i)**2/e**2)
+      p(i) = sigma*dlog((sigma+1)/(1.-sigma))
+      p(i) = gon(e**2/xm(i)**2,asl,xmu/xm(i))
+      r(i) = q(i)/(8.*pi*e)
+      enddo
+      do i=1,2
+      do j=1,2
+      if (i.eq.j) then
+      d(i,j) = xr + t(i,j)*(-p(j)*xr - xi*r(j))
+      else
+      d(i,j) =      t(i,j)*(-p(j)*xr - xi*r(j))
+      endif
+      enddo
+      enddo
+      DminusS = d(m,n)
+      return
+      end
+c----------------
+      function gon(x,sub,xmr)
+      implicit double precision (a-h,o-z)
+      pi = 4.d0*datan(1.d0)
+      if (x.gt.4.) then 
+      s = dsqrt(1. - 4./x)
+      g =  + s*dlog( (1.+s)/(1.-s) )
+      endif
+      if ((x.gt.0.).and.(x.le.4.)) then
+      s = dsqrt(4./x - 1.)
+      g = + 2.*s*datan(1./s)
+      endif
+      if (x.lt.0.) then
+      s = dsqrt(1. - 4./x)
+      g =  + s*dlog( (1.+s)/(s-1.) )
+      endif
+      if (x.eq.0.) then
+      g = 0.
+      endif
+      gon = (g + sub + dlog(1./xmr**2) )/(4.*pi)**2      
+      return
+      end
+
+c-------------
+
+      double complex function tmatS(s,m,n)
+      implicit double precision (a-h,o-z)
+      common /massoset/ xmu,xmp,xmk,fp,asl
+      dimension q(2),r(2),p(2),t(2,2)
+      double complex d(2,2)
+      double complex dinv(2,2)
+      double complex det
+      double complex xr,xi
+      common /nof0/ pkk
+      dimension xm(2)
+      xr = (1.d0,0.d0)
+      xi = (0.d0,1.d0)
+      pi = 4.d0*datan(1.d0)
+      xmp = 0.134
+c      xmp = 0.13957
+      xmk = 0.4957
+      fp = 0.093
+      xmu = .77
+      asl = -1.72208439
+      xm(1) = xmp
+      xm(2) = xmk
+      e = dsqrt(s)
+
+c      emin = 2.*xmk - 0.04
+c      emax = 2.*xmk + 0.04
+c      if ((e.ge.emin).and.(e.le.emax)) then
+cc      e = emin
+      pkk = 1.
+c      endif
+
+ 
+      do i=1,2
+      if (e.gt.2.*xm(i)) then
+      q(i) = dsqrt(e**2/4. - xm(i)**2)
+      else
+      q(i) = 0.d0
+      endif
+      enddo
+      t(1,1) = -(2.*e**2 - xmp**2)/(2.*fp**2) 
+      t(1,2) = -pkk*dsqrt(3.d0)*e**2/(4.*fp**2)
+      t(2,1) = t(1,2)
+      t(2,2) =  -3.*e**2/(4.*fp**2)
+      do i=1,2   
+      sigma = dsqrt(1. - 4.*xm(i)**2/e**2)
+      p(i) = sigma*dlog((sigma+1)/(1.-sigma))
+      p(i) = gon(e**2/xm(i)**2,asl,xmu/xm(i))
+      r(i) = q(i)/(8.*pi*e)
+      enddo
+      do i=1,2
+      do j=1,2
+      if (i.eq.j) then
+      d(i,j) = xr + t(i,j)*(-p(j)*xr + xi*r(j))
+      else
+      d(i,j) =      t(i,j)*(-p(j)*xr + xi*r(j))
+      endif
+      enddo
+      enddo
+
+      det = d(1,1)*d(2,2)-d(1,2)*d(2,1)
+      dinv(1,1) =  d(2,2)/det
+      dinv(1,2) = -d(1,2)/det
+      dinv(2,1) = -d(2,1)/det
+      dinv(2,2) =  d(1,1)/det
+
+      tmats = (0.d0,0.d0) 
+      do i=1,2
+      tmats = tmats + dinv(m,i)*t(i,n)
+      enddo 
+
+      return
+      end
+c-------------------------------------------
