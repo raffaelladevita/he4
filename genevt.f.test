@@ -1,0 +1,155 @@
+c***************************************************************************
+
+	subroutine genevt(w,jch)
+  
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++c
+c 									    c
+c functional description:						    c
+c 									    c
+c  this subroutine extracts teta and phi angles of two-body decay 
+c  products with respect the the rest frame of the decaying particle.
+c 
+c  EXTRACTED kinem values
+c  REFER TO MESON for: rho-N, phi-N, omega-N, eta-N, f2-N channels
+c  REFER TO DELTA for: delta-N channels
+c  REFER TO MESON for: delta decay
+c  REFER TO POSITIVE MESON for: rho decay, phi decay 
+c  AND ARE ASSIGNED TO PARTIC #1
+c    
+c  101) delta++ decay
+c  102) delta+  decay
+c  103) delta0  decay
+c  104) delta-  decay
+c  105) rho+    decay
+c  106) rho0    decay
+c  107) rho-    decay
+c  109) phi     decay
+c  110) lambda  decay
+c  112) f2      decay
+c--------------------------------------------------------------------------c
+
+	implicit none
+	integer nchan,nchan1,nchan2
+	parameter (nchan  = 100 )
+	parameter (nchan1 = 101 )
+	parameter (nchan2 = 200 )
+	real pigr,twopigr,deltang
+	real degrad
+	real rran
+	integer np,kgenev
+	real ecm,amass,pcm,wt
+        common/genin/np,ecm,amass(18),kgenev
+        common/genout/pcm(5,18),wt
+	character*12 fragment(10)
+	common/fragm/fragment
+	real rm1,rm2
+        integer nchain,ichain(nchan)
+        common /channels/nchain,ichain
+	real vecgen(0:nchan2)
+	common/geneven/vecgen
+
+	real xchan(nchan,50,0:18)
+	real xpcle(nchan1:nchan2,0:20,0:40)
+	common /sigmas/ xchan, xpcle
+	real hmax,h
+	integer ith,iph
+	integer jord
+	real dummy1(5),dummy2(5)
+	real theta_m,phi_m,etot_m,p_m,u1,u2,u3
+	real sigrif(18),dtheta,phi,teta,yran,w,sigriftot
+	real prob(0:18),sigmodel(18),w1,w2,dw,tetaj
+	integer jch,j,k,i
+
+	data pigr/3.141592/
+	data twopigr/6.283184/
+	data deltang/0.157080/
+        data degrad/0.0175/
+
+	jord=0
+
+c	vecgen = 0  =>  phase-space
+c	vecgen = 1  =>  tabulated diff. cross section
+
+c ***	vecgen = 1 .....
+c       this is for sure a two-body channel...
+c       decay angles are assigned to the partic #1
+	rm1=amass(1)
+	rm2=amass(2)
+	if(fragment(1).eq.'proton'.or.
+     +     fragment(1).eq.'neutron') then
+	   rm2=amass(1)
+	   rm1=amass(2)
+c	   change order of p.cles....
+	   jord=1
+	endif
+c	if(fragment(2).eq.'delta++'.or.
+c     +     fragment(2).eq.'delta+'.or.
+c     +     fragment(2).eq.'delta0'.or.
+c     +     fragment(2).eq.'delta-') then
+c	   rm2=amass(1)
+c	   rm1=amass(2)
+c	   jord=1
+c	endif
+
+c        if(jch.le.nchan.and.vecgen(jch).eq.1.) then
+        if(jch.le.nchan) then
+	    teta = pigr/2
+	    phi= pigr/6
+	    theta_m=teta
+	    phi_m=phi
+ 	    etot_m = (w**2+rm1**2-rm2**2)/(2*w)
+	    p_m=sqrt(etot_m**2-rm1**2)
+	    u1=sin(theta_m)*cos(phi_m)
+	    u2=sin(theta_m)*sin(phi_m)
+	    u3=cos(theta_m)
+	    pcm(1,1)=p_m*u1
+	    pcm(2,1)=p_m*u2
+	    pcm(3,1)=p_m*u3
+	    pcm(4,1)=etot_m
+	    pcm(5,1)=p_m
+	    pcm(1,2)=-pcm(1,1)
+	    pcm(2,2)=-pcm(2,1)
+	    pcm(3,2)=-pcm(3,1)
+	    pcm(4,2)=w-etot_m
+ 	    pcm(5,2)=p_m
+	    goto 99
+	endif
+
+        if(jch.gt.nchan) then
+c	resonance decay .....
+	     teta=pigr/6
+	     phi=twopigr/6
+  	     etot_m = (w**2+rm1**2-rm2**2)/(2*w)
+	     p_m=sqrt(etot_m**2-rm1**2)		
+	     u1=sin(teta)*cos(phi)
+	     u2=sin(teta)*sin(phi)
+	     u3=cos(teta)
+	     pcm(1,1)=p_m*u1
+	     pcm(2,1)=p_m*u2
+	     pcm(3,1)=p_m*u3
+	     pcm(4,1)=etot_m
+	     pcm(5,1)=p_m
+	     pcm(1,2)=-pcm(1,1)
+	     pcm(2,2)=-pcm(2,1)
+	     pcm(3,2)=-pcm(3,1)
+	     pcm(4,2)=w-etot_m
+ 	     pcm(5,2)=p_m
+	     goto 99
+	endif
+ 99	continue
+	if (jord.eq.1) then
+c	re-established order of p.cles....
+	   do j=1,5
+	     dummy1(j)= pcm(j,1)
+	     dummy2(j)= pcm(j,2)
+	   enddo
+	   do j=1,5
+	     pcm(j,1)=dummy2(j)
+	     pcm(j,2)=dummy1(j)
+	   enddo
+	 endif
+	return
+	end
+  
+							! *** end genevt ***
+

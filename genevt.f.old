@@ -1,0 +1,385 @@
+c***************************************************************************
+
+	subroutine genevt(w,jch)
+  
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++c
+c 									    c
+c functional description:						    c
+c 									    c
+c  this subroutine extracts teta and phi angles of two-body decay 
+c  products with respect the the rest frame of the decaying particle.
+c 
+c  EXTRACTED kinem values
+c  REFER TO MESON for: rho-N, phi-N, omega-N, eta-N, f2-N channels
+c  REFER TO DELTA for: delta-N channels
+c  REFER TO MESON for: delta decay
+c  REFER TO POSITIVE MESON for: rho decay, phi decay 
+c  AND ARE ASSIGNED TO PARTIC #1
+c    
+c  101) delta++ decay
+c  102) delta+  decay
+c  103) delta0  decay
+c  104) delta-  decay
+c  105) rho+    decay
+c  106) rho0    decay
+c  107) rho-    decay
+c  109) phi     decay
+c  110) lambda  decay
+c  112) f2      decay
+c--------------------------------------------------------------------------c
+
+	implicit none
+	integer nchan,nchan1,nchan2
+	parameter (nchan  = 100 )
+	parameter (nchan1 = 101 )
+	parameter (nchan2 = 200 )
+	real pigr,twopigr,deltang
+	real degrad
+	real rran
+	integer np,kgenev,ij
+	real ecm,amass,pcm,wt
+        common/genin/np,ecm,amass(18),kgenev
+        common/genout/pcm(5,18),wt
+	character*12 fragment(10)
+	common/fragm/fragment
+	real rm1,rm2
+	real t_ref,target_p(4),proton_diff(4),t_mandel,scal_prod,extr_mode
+	common /t_refer/ t_ref,extr_mode
+        integer nchain,ichain(nchan)
+        common /channels/nchain,ichain
+	real vecgen(0:nchan2)
+	common/geneven/vecgen
+
+c             *** aggiunta marco ***
+
+c    definisco in common la flag per l' estrazione della omega 
+
+	integer ds_omega_fn
+        common/omega/ds_omega_fn
+
+c ************************************************************
+
+	real xchan(nchan,50,0:18)
+	real xpcle(nchan1:nchan2,0:20,0:40)
+	common /sigmas/ xchan, xpcle
+	real hmax,h
+	integer ith,iph
+	integer jord
+	real dummy1(5),dummy2(5)
+	real theta_m,phi_m,etot_m,p_m,u1,u2,u3
+	real sigrif(18),dtheta,phi,teta,yran,xran,x,y,w,sigriftot
+	real prob(0:18),sigmodel(18),w1,w2,dw,tetaj
+	integer jch,j,k,i
+	real ds_fn,dsdt_fn
+	real Eg_cm_x,Eo_cm_x,po_cm_x,t_max_x,t_min_x,t_extr	
+
+
+
+        data pigr/3.141592/
+	data twopigr/6.283184/
+	data deltang/0.157080/
+        data degrad/0.0175/
+	
+
+
+
+	jord=0
+
+c	vecgen = 0  =>  phase-space
+c	vecgen = 1  =>  tabulated diff. cross section
+
+        if(vecgen(jch).eq.0.) then
+c ***	vecgen = 0 .....
+	   ecm = w
+c	   call genbod
+	   if(np.ne.3) call genbod
+	   if(np.eq.3) call gen3n1bod
+	   return
+	endif
+
+c ***	vecgen = 1 .....
+c       this is for sure a two-body channel...
+c       decay angles are assigned to the partic #1
+	rm1=amass(1)
+	rm2=amass(2)
+	if(fragment(1).eq.'proton'.or.
+     +     fragment(1).eq.'neutron') then
+	   rm2=amass(1)
+	   rm1=amass(2)
+c	   change order of p.cles....
+	   jord=1
+	endif
+c	if(fragment(2).eq.'delta++'.or.
+c     +     fragment(2).eq.'delta+'.or.
+c     +     fragment(2).eq.'delta0'.or.
+c     +     fragment(2).eq.'delta-') then
+c	   rm2=amass(1)
+c	   rm1=amass(2)
+c	   jord=1
+c	endif
+
+        if(jch.le.nchan.and.vecgen(jch).eq.1.) then
+c ***	channel decay .....
+	    do j=1,18
+	        sigrif(j) = 0.
+	        sigmodel(j) = 0.
+	        prob(j) = 0.
+	    end do
+            dtheta = 10.*degrad
+            phi = rran()*twopigr
+	    sigriftot = 0.
+	    w1=1.0
+	    dw=0.05
+	    i=1
+ 9	    w2=w1+dw
+	    if (w.ge.w1.and.w.lt.w2) goto 1	
+	    w1=w2
+	    i=i+1
+	    goto 9
+1	    continue
+            do j=1,18
+	        tetaj = j*dtheta
+                sigmodel(j) =  xchan(jch,i,j)
+	        sigrif(j) = sigmodel(j)*sin(tetaj)
+	        if(sigmodel(j).lt.0.) sigmodel(j)=0.
+	        sigriftot = sigriftot + sigrif(j)
+            end do
+	    prob(0) = 0.
+	    do j=1,18
+	        sigrif(j) = sigrif(j)/sigriftot 
+	        prob(j) = prob(j-1)+sigrif(j)
+	    end do
+            yran = rran()
+	    do 2 k=1,18
+	    if (yran.gt.prob(k-1).and.yran.le.prob(k)) goto 3
+2	    end do
+3	    teta = 10*(k-1)+10/(prob(k)-prob(k-1))*(yran-prob(k-1))
+
+
+c             *************  aggiunta marco  ***************
+
+c      ** caso canale della omega ed estrazione secondo funzione continua **
+c	    write (*,*) jch,ds_omega_fn,w
+	    if ((jch.eq.19.or.jch.eq.35).and.ds_omega_fn.eq.1.and.w.ge.2.5.and.w.le.2.9) then
+
+c      ** debugging di entrata nella routine **
+c	       write(*,*), ds_omega_fn
+c	       write(*,*) 'sono nel loop'
+ 999	       continue
+	     if (extr_mode.eq.1) then ! extracting according theta and W distribution ds_fn(w,xran)
+c     ** genero numeri casuali xran(0:180) , yran (0:massimo della f(w,teta)*sin (teta)) **
+1000	      xran=rran()*180.
+	      yran=rran()*10.
+c     **      yran va da 0. a 10. perche' ho notato che il max di ds_fn=f(w,teta)*sin(teta) 
+c           varia poco con w e vale circa 10 =>lo assumo come max assoluto
+c	    write(*,*) 'x=',xran
+c	    write(*,*) 'y=',yran
+c	    write(*,*) 'f(w,teta)*sin(teta)=',ds_fn(w,xran)
+c	    write(*,*) 'w=',w
+	    
+
+
+c    ** scarta xran se yran > f(w,xran) e se t > -1  **  
+	      if (yran.le.ds_fn(w,xran)) goto 1003
+	      goto 1000
+	    else if(extr_mode.eq.2) then
+c	       Mo_x=rm1 ! current omega mass
+c	       Mp_x=rm2 ! proton mass
+	     Eg_cm_x=(w**2-rm2**2)/2/w
+             Eo_cm_x=(w**2+rm1**2-rm2**2)/2/w
+	     po_cm_x=sqrt(Eo_cm_x**2-rm1**2)
+c            defining min and max (-t) 
+	     t_max_x=-(rm1**2-2*Eg_cm_x*Eo_cm_x-2*Eg_cm_x*po_cm_x) ! 180 deg
+	     t_min_x=-(rm1**2-2*Eg_cm_x*Eo_cm_x+2*Eg_cm_x*po_cm_x) ! 0 deg
+ 1010	     t_extr=(rran()*(t_max_x-t_min_x))+t_min_x
+c checking and  Rejecting low -t values
+	     if(-t_extr.gt.t_ref) goto 1010
+	     yran=rran()
+	      if (yran.le.dsdt_fn(w,t_extr)) then ! dsdt_fn is the (w,-t) distribution
+c	     write(*,*) t_extr,dsdt_fn(w,t_extr)
+	       xran=acos((-t_extr-(rm1**2-2*Eg_cm_x*Eo_cm_x))/2/Eg_cm_x/po_cm_x)*180/3.1415
+               goto 1003
+	      else 
+		 continue
+		 goto 1010
+	      endif	 
+	    endif
+   
+
+c    ** adesso xran e' il mio angolo teta in gradi **
+1003	    teta=xran
+c	    write(*,*) 'teta =',teta
+	    endif
+c  ***************************************************************************
+
+            theta_m = teta*degrad
+	    phi_m = phi
+ 	    etot_m = (w**2+rm1**2-rm2**2)/(2*w)
+	    p_m=sqrt(etot_m**2-rm1**2)
+	    u1=sin(theta_m)*cos(phi_m)
+	    u2=sin(theta_m)*sin(phi_m)
+	    u3=cos(theta_m)
+	    pcm(1,1)=p_m*u1
+	    pcm(2,1)=p_m*u2
+	    pcm(3,1)=p_m*u3
+	    pcm(4,1)=etot_m
+	    pcm(5,1)=p_m
+	    pcm(1,2)=-pcm(1,1)
+	    pcm(2,2)=-pcm(2,1)
+	    pcm(3,2)=-pcm(3,1)
+	    pcm(4,2)=w-etot_m
+ 	    pcm(5,2)=p_m
+
+C+ Checking t>t_ref
+c ***   target proton 4-momentum assignment in cmh
+	target_p(1) = 0
+	target_p(2) = 0
+	target_p(3) = -(w**2-0.938**2)/2./w
+	target_p(4) = sqrt(target_p(3)**2+0.938**2)
+c+ t-definition in HCM
+	do ij=1,4
+	 proton_diff(ij)=pcm(ij,2)-target_p(ij)
+c	print *,ij,proton_diff(ij)
+	enddo 
+
+c++ Calculating t as scalar product:
+	t_mandel=scal_prod(proton_diff,proton_diff)
+	t_mandel=proton_diff(4)*proton_diff(4)-t_mandel
+c++ Rejecting low -t values
+c	print *,t_mandel
+        if(t_mandel.gt.t_ref) goto 999
+c	print *,'shdkajshakjfhkj',t_mandel
+c-- End t-check routine
+
+	    goto 99
+	endif
+
+        if(jch.gt.nchan.and.vecgen(jch).eq.1.) then
+c	resonance decay .....
+	     hmax=xpcle(jch,0,0)
+	     do ith=0,20
+		do iph=0,40
+		   if(xpcle(jch,ith,iph).gt.hmax) hmax=xpcle(jch,ith,iph)
+		enddo
+	     enddo
+ 33	     h=rran()*hmax
+c	     teta=acos(pigr*rran())
+c	     cross sect is binned in teta (not cos(teta)!)  intervals....
+	     teta=pigr*rran()
+	     phi=twopigr*rran()
+             ith = int(teta/deltang)
+	     iph = int(phi/deltang)
+	     if(h.gt.xpcle(jch,ith,iph)) goto 33
+ 	     etot_m = (w**2+rm1**2-rm2**2)/(2*w)
+	     p_m=sqrt(etot_m**2-rm1**2)		
+	     u1=sin(teta)*cos(phi)
+	     u2=sin(teta)*sin(phi)
+	     u3=cos(teta)
+	     pcm(1,1)=p_m*u1
+	     pcm(2,1)=p_m*u2
+	     pcm(3,1)=p_m*u3
+	     pcm(4,1)=etot_m
+	     pcm(5,1)=p_m
+	     pcm(1,2)=-pcm(1,1)
+	     pcm(2,2)=-pcm(2,1)
+	     pcm(3,2)=-pcm(3,1)
+	     pcm(4,2)=w-etot_m
+ 	     pcm(5,2)=p_m
+	     goto 99
+	endif
+ 99	continue
+	if (jord.eq.1) then
+c	re-established order of p.cles....
+	   do j=1,5
+	     dummy1(j)= pcm(j,1)
+	     dummy2(j)= pcm(j,2)
+	   enddo
+	   do j=1,5
+	     pcm(j,1)=dummy2(j)
+	     pcm(j,2)=dummy1(j)
+	   enddo
+	 endif
+
+	return
+	end
+
+
+
+
+
+
+
+							! *** end genevt ***
+
+
+
+c     ******************** aggiunta marco **************************
+   
+        function ds_fn(w1,teta1)
+	implicit none
+	real ds_fn,w1,teta1
+	ds_fn=sin(teta1*3.14/180)*(2.42-0.44*w1)*((-4.99+15.9*w1)*
+     &  exp(-0.5*((teta1-(3.45+0.3*w1))/(39.63-9.27*w1))**2)+
+     &  (0.52+0.17*w1)*exp(-0.5*((teta1-(193.6-22.4*w1))/(-256.9+116.3*w1))**2))
+	return
+	end
+c     ***************************************************************
+
+c     ******************** aggiunta marco **************************
+   
+        function dsdt_fn(w1,t1)
+	implicit none
+c dsdt_fn is the (w,-t) distribution
+	real dsdt_fn,w1,t1,f_exp
+	real ds0,ds1,ds2
+	real tmin0,tmin1,tmin2
+	real tmax0,tmax1,tmax2
+	real dsx0,dsx1
+	real a0,a1,b0,b1
+	
+	tmin0=0
+	tmax0=0.5
+	a0=1
+	b0=-6.8
+	ds0=f_exp(a0,b0,t1)
+	dsx0=f_exp(a0,b0,tmax0)
+
+	tmin1=tmax0
+	tmax1=1.5
+	b1=-3.2
+	a1=dsx0*exp(-b1*tmin1)
+	ds1=f_exp(a1,b1,t1)
+	dsx1=f_exp(a1,b1,tmax1)
+
+	tmin2=tmax1
+	tmax2=6.
+	ds2=dsx1/(5-tmax1)*(t1+5.-2*tmin2)
+
+	if(t1.lt.tmax0) dsdt_fn=ds0
+	if(t1.gt.tmin1.and.t1.lt.tmax1) dsdt_fn=ds1
+	if(t1.gt.tmin2.and.t1.lt.tmax2) dsdt_fn=ds2
+
+	return
+	end
+c     ***************************************************************
+
+        function f_exp(a,b,x)
+	implicit none
+	real f_exp,a,b,x
+	f_exp=a*exp(x*b)
+	return
+	end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
